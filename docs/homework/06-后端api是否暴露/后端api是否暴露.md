@@ -27,9 +27,15 @@ location /health {
               唯一对外入口              不暴露                不暴露
 ```
 
-## 三、本仓库（CampusClaw）的对照实现
+## 三、本仓库（CampusClaw）的同构实现
 
-我们的学期仓采用**单服务架构**（design.md 选型，课件允许）：Flask 一个进程同时承担页面与 API，对外只有一个端口 8080（见截图「自有代码1」「自有代码2」）。两种架构形态不同，但设计目标一致——**收窄并守住入口**：
+本仓库开发期为 Flask 单进程（`run.py` 8080），**正式部署已按与演示仓相同的拓扑 Docker 化**（见 `docker-compose.yml`、`deploy/nginx.conf`，规约 Decision 6）：
+
+- `app` 服务（gunicorn 8000）**不写 `ports`**，仅 Compose 内部网络可达——与演示仓 api 相同
+- `web` 服务（Nginx）映射 `8088:8080`，反代 `/`、`/api/`、`/health` 到 `app:8000`——与演示仓相同
+- 实测：`docker compose up --build` 后，`docker ps` 显示 web `0.0.0.0:8088->8080`、app 仅 `8000/tcp`；宿主直连 `localhost:8000` 被拒绝，经 `8088` 的 `/health`、`/api/login`、登录页全部正常
+
+开发期单进程形态（截图「自有代码1」「自有代码2」）与部署期双服务形态并存，行为不变：
 
 | | 演示仓（三服务） | 本仓库（单服务） |
 | --- | --- | --- |
