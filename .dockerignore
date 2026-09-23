@@ -1,0 +1,11 @@
+.git
+.env
+data/
+uploads/
+__pycache__/
+*.pyc
+docs/
+ppt/
+homework/
+openspec/
+.agents/

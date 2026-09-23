@@ -36,11 +36,11 @@
 
 ## 6. Docker Compose 与 GET /health（T6）
 
-- [ ] 6.1 添加 `Dockerfile`、`docker-compose.yml`、`.env.example`；挂载 `./data`、`./uploads` — verify: `docker compose up --build -d` 后容器 running
-- [ ] 6.2 实现 `GET /health` 无需登录；compose 配置 healthcheck — verify: `curl -sf http://localhost:8080/health` 返回 200 JSON
+- [ ] 6.1 添加 `Dockerfile`（gunicorn 绑 `0.0.0.0:8000`）、`docker-entrypoint.sh`、`docker-compose.yml`、`.env.example`、`.dockerignore`；挂载 `./data`、`./uploads` — verify: `docker compose up --build -d` 后 app/web 容器 running 且 healthy
+- [ ] 6.2 双服务拓扑：app **无 ports 映射**；web（Nginx，`deploy/nginx.conf`）映射 `8088:8080` 并反代 `/`、`/api/`、`/health` 到 `app:8000` — verify: 宿主 `curl http://localhost:8000/health` 连接失败；`curl -sf http://localhost:8088/health` 返回 200 JSON；`curl -sf -X POST http://localhost:8088/api/login` 正常响应
 - [ ] 6.3 容器 entrypoint/启动时自动 init_db（若库不存在）— verify: 删 `data/app.db` 后 compose up 仍可登录预置账号
-- [ ] 6.4 `docker compose down` 再 `up`（不删 volume）后预置与上传数据仍在 — verify: 上传一条后再 down/up，列表仍含该条
-- [ ] 6.5 README 补充 Compose 启动步骤、登录 URL、health URL、`.env` 说明 — verify: 按 README 从零可打开登录页并 curl health
+- [ ] 6.4 `docker compose down` 再 `up`（不删 volume）后预置与上传数据仍在 — verify: 上传一条后再 down/up，经 8088 列表仍含该条
+- [ ] 6.5 README 补充 Compose 启动步骤、登录 URL（8088）、health URL、`.env` 说明 — verify: 按 README 从零可打开登录页并 curl health
 
 ## 7. 规约与收尾（T7）
 

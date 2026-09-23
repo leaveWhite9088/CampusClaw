@@ -124,27 +124,38 @@ Client GET /materials (或 /api/materials)
 
 ## Docker Compose 与 GET /health
 
+### 部署拓扑：web（Nginx）+ app（Flask/gunicorn）双服务
+
+对齐课程演示架构的攻击面最小化原则：**app 不向宿主机暴露端口**，唯一对外入口是 web（Nginx）。
+
+```
+浏览器 ──► localhost:8088 (web: Nginx) ──内部网络──► app:8000 (Flask/gunicorn)
+              唯一对外端口映射                          无 ports，仅内部可达
+```
+
+- Nginx 反代：`location /api/`、`location /health`、`location /`（SSR 页面）均 `proxy_pass` 到 `http://app:8000`；浏览器与后端接口同源。
+- app 服务**不写 `ports`**；宿主直接访问 `localhost:8000` 必须失败。
+
 ### 文件约定
 
-- `Dockerfile`：多阶段或单阶段安装依赖、复制 `app/`、`scripts/`；`CMD` 启动 gunicorn 或等价。
+- `Dockerfile`：安装依赖（含 gunicorn）、复制 `app/`、`scripts/`、`run.py`；`CMD` 经 entrypoint 启动 gunicorn 绑定 `0.0.0.0:8000`。
+- `docker-entrypoint.sh`：若 `data/app.db` 不存在则先运行 `python scripts/init_db.py`（建表 + 种子），再 exec 启动命令。
 - `docker-compose.yml`：
-  - service `app`，`build: .`，`ports: ["8080:8080"]`（或与 README 一致）。
-  - `volumes`: `./data:/app/data`，`./uploads:/app/uploads`。
-  - `env_file: .env`；`environment` 可覆盖 `SECRET_KEY`。
-  - `healthcheck`: 例如 `curl -f http://127.0.0.1:8080/health` 或 `wget -qO- ...`。
-- `.env.example`：列出 `SECRET_KEY=` 占位与说明；**不提交真实密钥**。
+  - service `app`，`build: .`，**无 `ports`**；`volumes`: `./data:/app/data`，`./uploads:/app/uploads`；`env_file: .env`；`healthcheck` 指向 `http://localhost:8000/health`。
+  - service `web`，`image: nginx`（或等价），挂载 `deploy/nginx.conf`，`ports: ["8088:8080"]`，`depends_on` app healthy。
+- `.env.example`：列出 `SECRET_KEY=`、`PORT=8000` 占位与说明；**不提交真实密钥**。
 
 ### 启动与初始化
 
 - 容器 entrypoint 或首次启动：若 `data/app.db` 不存在则运行 `python scripts/init_db.py`（建表 + 种子 A/B 班、用户、样本材料）。
-- README 步骤：`cp .env.example .env` → 填 `SECRET_KEY` → `docker compose up --build` → 打开 `http://localhost:8080/login`。
+- README 步骤：`cp .env.example .env` → 填 `SECRET_KEY` → `docker compose up --build` → 打开 `http://localhost:8088/login`。
 
 ### GET /health
 
 - 路由：`GET /health`，**无需登录**。
 - 响应：`200`，`Content-Type: application/json`，body 如 `{"status":"ok"}`。
 - 可选：检测 SQLite 文件可读；失败时返回 `503`（本 change 可简化为进程存活即 ok）。
-- Compose `healthcheck` 依赖此端点，避免「容器 up 但应用未就绪」。
+- Compose `healthcheck` 依赖此端点，避免「容器 up 但应用未就绪」；Nginx 亦将 `/health` 反代至 app。
 
 ---
 
@@ -157,12 +168,14 @@ Client GET /materials (或 /api/materials)
 | 3 | bcrypt 密码哈希 | PBKDF2-only |
 | 4 | 单库 + class_id 过滤 | 每班独立库 |
 | 5 | MVP 解析 txt/md | PDF 管道后置 |
+| 6 | web(Nginx)+app 双服务，app 不暴露端口 | 单服务 app 直挂 8080（开发期形态） |
 
 ## Risks / Trade-offs
 
 - [PDF 解析复杂] → 首版仅 txt/md；失败场景 spec 已要求无脏数据。
 - [403 vs 404 跨班] → 在 README 与 tasks 验收中固定一种。
 - [Flask dev server] → Compose 内用 gunicorn。
+- [双服务复杂度] → 多一个 Nginx 容器换取与演示架构一致的暴露面；本地开发仍可 `python run.py` 单进程跑 8080。
 
 ## Migration Plan
 

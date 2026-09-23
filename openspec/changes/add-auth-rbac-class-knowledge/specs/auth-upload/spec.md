@@ -172,13 +172,19 @@
 
 ### Requirement: Docker Compose 部署与健康检查
 
-系统 MUST 以 Docker Compose 作为标准启动方式；应用 MUST 提供 `GET /health`；数据库文件与上传目录 MUST 通过 volume 持久化，以便容器重建后数据仍在。
+系统 MUST 以 Docker Compose 作为标准启动方式；应用 MUST 提供 `GET /health`；数据库文件与上传目录 MUST 通过 volume 持久化，以便容器重建后数据仍在。部署 MUST 遵循最小暴露面：应用（后端）服务 MUST NOT 将端口映射到宿主机，唯一对外入口 MUST 为反向代理服务（如 Nginx）。
 
 #### Scenario: Compose 启动后可访问
 
 - **WHEN** 操作者按 README 复制 `.env.example` 并执行 `docker compose up --build`（或文档等价命令）直至 healthcheck 通过
 - **THEN** 浏览器 MUST 可访问登录页 URL
 - **AND** `GET /health` MUST 返回 HTTP 200 且 body 表明服务可用（如 JSON `status: ok`）
+
+#### Scenario: 后端服务不直接暴露
+
+- **WHEN** Compose 启动完成后，从宿主机直接请求应用服务的内部端口（如 `http://localhost:8000/health`）
+- **THEN** 连接 MUST 失败（无端口映射）
+- **AND** 经反向代理入口（如 `http://localhost:8088/health` 与 `/api/...`）MUST 可正常访问后端接口
 
 #### Scenario: health 不依赖登录态
 
