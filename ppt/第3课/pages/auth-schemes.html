@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="6YLgBBSOcdwvpU1N8kVwev">
+  <head data-page-node-id="MqL1keyDN917zfNtF2xWLD">
+    <meta charset="UTF-8" data-page-node-id="fRkVxUBDW94AjFPdlUVb85"/> <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="OZK1HtxStFteWTGX5mCmei"/>
+    <title>认证方案对照 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css" data-page-node-id="epC49TJZnEZAUCJA0uNBZb"/>
+  </head>
+  <body data-page-node-id="uF7XHA4EvRlhMK5NdlTFqf">
+    <div class="app" data-page-node-id="yXTaa5cPjVlqqpAOlKyqBr">
+      <aside class="sidebar" id="sidebar" data-page-node-id="g19eHPgcdDcXCTgtivrOXG">
+        <a class="brand" href="../index.html" data-page-node-id="anIRG0ftkpwb7UcgogorG6">CampusClaw<span data-page-node-id="4uRDNA8eKkmTbWrJQOsAQp">第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航" data-page-node-id="haJTy34jYZGikJaF3ITiJA">
+          <p class="nav-label" data-page-node-id="3Ruu1djsUTUQc9uUhlZeZM">本课</p>
+          <a href="../index.html" data-page-node-id="mOthfYEusBWweBF7MBO1T5">概览</a> <a href="scope.html" data-page-node-id="Ez40DJoElk9rt9NiBaAk5v">要做成什么样</a> <a href="architecture.html" data-page-node-id="N48ixxZ6FSAP3ojCnZPzJQ">系统怎么走</a> <a href="security.html" data-page-node-id="UpRIW0VBk7WBpub46Hfrz5">安全与部署</a> <a href="auth-schemes.html" class="active" data-page-node-id="p3Dmvb5HsbjTWLWvTB2fvO">认证方案对照</a>
+          <p class="nav-label" data-page-node-id="T4Kp9uINasrIDVVecCb3AA">实现步骤</p>
+          <a href="roadmap.html" data-page-node-id="9Jq4JekatQ2317Z4qgiJf3">路线图</a> <a href="s1-skeleton.html" data-page-node-id="GrCtMO5AGHNzKMtECTzpd0">1 骨架与配置</a> <a href="s2-data.html" data-page-node-id="6JazPM4OB48dRWyoRkrVHk">2 数据与种子</a> <a href="s3-auth.html" data-page-node-id="PK2ZcmVQWkaDBL3Y9T4h7S">3 登录与会话</a> <a href="s4-isolation.html" data-page-node-id="QQChHsxiJk17mLRMZ5xSmZ">4 班级隔离</a> <a href="s5-upload.html" data-page-node-id="4u3IKsT6I9AH6iuIxPm7lY">5 上传入库</a> <a href="s6-frontend.html" data-page-node-id="tLef32USgS5rVJQJWMEFgU">6 前端页面</a> <a href="s7-compose.html" data-page-node-id="7wkyOYupN6BF25ugUzAfSi">7 Compose</a> <a href="s8-verify.html" data-page-node-id="IxqKGIztpnHH3xi9mxMX8Y">8 验收</a>
+          <p class="nav-label" data-page-node-id="0lLmAeABIxVCy8knGYl4iD">核对</p>
+          <a href="checklist.html" data-page-node-id="4rAgT3xy5w6AqC5EXXySOu">核对总表</a>
+          <p class="nav-label" data-page-node-id="Kl1eqhSyPK5GwQz3ypmV6m">发布</p>
+          <a href="design.html" data-page-node-id="I57yIPgleqk3UeEppsbNrA">设计决策</a> <a href="apply.html" data-page-node-id="4W2OznbR8SmbWUfYw0s4cg">按规约实现</a> <a href="ship.html" data-page-node-id="DNw9XXIEJNVBNgHm3zFxvs">提交清单</a> <a href="nongoals.html" data-page-node-id="4OhYgZBI4zB6vNR456MQt8">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main" data-page-node-id="wtk7iAb3u29524i93ivNhR">
+        <header class="topbar" data-page-node-id="OZmc3ucieLitaiuxWxt08Y">
+          <button class="menu-btn" type="button" id="menuBtn" data-page-node-id="P4AeTIMGCPsDB81cEpzsBh">菜单</button>
+          <div class="crumb" data-page-node-id="bLetFHXpdoE8DGS7bufYRI">
+            知识 / 认证
+          </div>
+          <div class="badge" data-page-node-id="RClPtCuGRwLarULOufLB9y">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content" data-page-node-id="g3kfDhKOrMfLJkyp0116CU">
+          <h1 data-page-node-id="EAKXoxj8liwurngpmgsVOj">认证方案对照</h1>
+          <p class="lead" data-page-node-id="vfkq38warDemmK3O6CbTZh">本课实现服务端会话 Cookie。其他方案要能讲清机制与代价，不要在本迭代中改用 JWT 应付验收。</p>
+          <div class="note howto" data-page-node-id="zwdm4lMwQj8ACBNZfveKUL">
+            每步按同一顺序展开：<b data-page-node-id="VEDoa08hyeRjYHQ6ufmSWa">知识点</b> → <b data-page-node-id="19SVtDtjfqz4oSPqQyetQN">其他可行方案与选择依据</b> → <b data-page-node-id="1uVfMKE9Y9GwGwqoC2tlnl">本步要核对</b> → <b data-page-node-id="2mbxFWWdtgqkBtH7J9lXBf">动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html" data-page-node-id="shUlVEDGdQFkezSoH3AWpZ">实现方案核对总表</a>。
+          </div>
+          <nav class="steps" data-page-node-id="wFdvAfZKAUoUzYoMNXJaK0">
+            <p class="steps-h" data-page-node-id="YIJ2uUPar7BRI37lQREGAN">本页步骤</p>
+            <a href="#u1" data-page-node-id="W0QeOu0FhCX27bgozM9lep"><span class="steps-n" data-page-node-id="HsyArZx4JfLXfcDCA4iSRo">1</span><span class="steps-t" data-page-node-id="xGV31ZrDmAQZb4IBt7MCtE">先看清有哪几类方案，代价各是什么</span></a><a href="#u2" data-page-node-id="7EeIe1hs3zVbAgzjR6WHph"><span class="steps-n" data-page-node-id="2AYkjZU9O1wYydODJFgtuG">2</span><span class="steps-t" data-page-node-id="w1i2305wUP0TtlG6TQGzV5">本课的选择：服务端会话 Cookie</span></a>
+          </nav>
+          <section class="unit" id="u1" data-page-node-id="0x1Vpenxs9uQdaj9cH8stX">
+            <h2 class="unit-h" data-page-node-id="XGEEDNon1ceMswUMPnFp0a">
+              <span class="unit-n" data-page-node-id="7IyhJJsr8cAnimFp8vUZb4">1</span><span class="unit-t" data-page-node-id="abGUYYdIzcIGh7wcEeqLJP">先看清有哪几类方案，代价各是什么</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="XDwcYD7b33okzWivbkWCrN">会话、JWT、Refresh token、OAuth/OIDC、API Key 各自解决什么问题、把状态放在哪、登出后能否立刻失效。</p>
+            <h3 class="unit-sub" data-page-node-id="0c9czJmizdiytDEMVd8eRz">方案对照表</h3>
+            <table data-page-node-id="GBsLJLFPeElAZJ06VwuJP5">
+              <thead data-page-node-id="ckK4XnIujTolvQfg1O9MsT">
+                <tr data-page-node-id="x04y4hOrrbFBKhqsIhBgqZ">
+                  <th data-page-node-id="fZAourUgtrVQEtGukKsgYh">方案</th>
+                  <th data-page-node-id="dH6IO29Rrv1i6ECiZLcIYH">状态放在哪</th>
+                  <th data-page-node-id="pTfTibQ5woDMepvJHqB9E0">登出</th>
+                  <th data-page-node-id="MPySbh8czUGvWARz9hilEL">典型场景</th>
+                  <th data-page-node-id="YQYDq6B1kyZW34k5UrFKWa">本课</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="iO1fpkwb61rRNE8nJilpky">
+                <tr data-page-node-id="iZJI5XcqBNPPwakmD63C5d">
+                  <td data-page-node-id="OxXKdNtWkZ70Vk6RT0q9wl">会话 + HttpOnly Cookie</td>
+                  <td data-page-node-id="KB0LR5mHZo60Lv3WZmeFwz">服务端会话表；客户端只有不透明 ID</td>
+                  <td data-page-node-id="azVV9WAiZ1uscRlrSO8RD2">删会话行，立刻失效</td>
+                  <td data-page-node-id="FlNbqTfLEqtyPiRJM2hHAu">同源 Web</td>
+                  <td data-page-node-id="C2NCysJ5PTstRLdM9TDMcA">要做</td>
+                </tr>
+                <tr data-page-node-id="Fb5lNWPyZoSvjMohgLjUEl">
+                  <td data-page-node-id="uQjsopSzhEzelPriaFdNCi">会话 ID 放 Authorization 头</td>
+                  <td data-page-node-id="ZC6vN2fOQP0e8e8AG8euV7">仍是服务端会话</td>
+                  <td data-page-node-id="kuiUmhH4S5n0b6DjG9O5aO">同样立刻失效</td>
+                  <td data-page-node-id="HDHWAP9LTzgc6WFW3sbwjg">SPA 跨域、移动端</td>
+                  <td data-page-node-id="9w1fUDr5QKFkNJU5MpcA89">了解</td>
+                </tr>
+                <tr data-page-node-id="aYQ8VajEFKQBd5llMzRbxm">
+                  <td data-page-node-id="OjdVO13tFMteQgWOtTGoyF">JWT access token</td>
+                  <td data-page-node-id="evvWuwahKKrVYpuGUY668E">载荷在客户端；服务端验签名</td>
+                  <td data-page-node-id="LtBomGSTEeCn6tYeBhT23q">过期前难作废</td>
+                  <td data-page-node-id="CypABqw6zgj013WqXvFIEj">无状态 API、多实例</td>
+                  <td data-page-node-id="ajpce33bgMQqc1TOe6OF8o">了解，不做</td>
+                </tr>
+                <tr data-page-node-id="GPgvGiIBnP3OAlCDIVvWZu">
+                  <td data-page-node-id="RSo5uevvhPWm5B0cSIlmRO">Access + Refresh</td>
+                  <td data-page-node-id="FOWdhlEwoCiwjHi84rHZd2">短 token + 可轮转的长 token</td>
+                  <td data-page-node-id="9fdI0LNyIljItkJrrd39VB">吊销 refresh</td>
+                  <td data-page-node-id="6CR0SdNPLqh4XswXKnOQiO">移动端、开放 API</td>
+                  <td data-page-node-id="GJC2IQQy1p9hvhb4k5fDJV">了解，不做</td>
+                </tr>
+                <tr data-page-node-id="22YfAOLDbzgQMqXECWYUEr">
+                  <td data-page-node-id="xjGR7ZJ0kr7YQiDh6TF1Cb">OAuth / OIDC / SSO</td>
+                  <td data-page-node-id="CYDDc3UQd2TYqGNqlM14lB">外部 IdP 发令牌</td>
+                  <td data-page-node-id="Dp7qGl0JEAvBGCq6Ck3FtT">跟 IdP 会话有关</td>
+                  <td data-page-node-id="sOZF5M66qvUgJGJWuBRDYu">校园统一身份</td>
+                  <td data-page-node-id="KALMnYu8b20biV142ZPZro">了解，不做</td>
+                </tr>
+                <tr data-page-node-id="jgnjCyIYDzziFc1N2Fi0jP">
+                  <td data-page-node-id="JfIw0ZTgchKv5B0mbVgpc1">API Key</td>
+                  <td data-page-node-id="RUFMtqZQN5euAQVmJafzgA">长期密钥</td>
+                  <td data-page-node-id="WdRafgDo5qDBlHpCDL1QiI">轮换密钥</td>
+                  <td data-page-node-id="ZnK5mvxDEmEF1Jn3D9oaGO">机器对机器</td>
+                  <td data-page-node-id="YClghjch0Wl3zeNy7D6chy">了解，不做</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="zAjyyMospdGLke1TtWgCwW">知识点</h3>
+            <article class="kp-card" data-page-node-id="B8Lha84DmQ5Gz6LNiyjN7d">
+              <h3 data-page-node-id="PyP2FMxtx63YEq6UmcBa1Q">JWT（JSON Web Token）</h3>
+              <p data-page-node-id="RqoGple0wmvvhbFV1wSbrl">由三段组成：头部（Header）、载荷（Payload）、签名（Signature）。载荷可携带 user_id、role、exp 等声明。校验签名即可承认身份，服务端不必每请求查会话表，利于无状态水平扩展。代价：载荷默认可见（Base64 编码不是加密）；将 role 写入 token 后，修改角色需等 token 过期；登出不能立刻作废，除非额外维护黑名单，相当于又把状态管理引回服务端。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="QVBRHT9AGNvFc8CybbQol9">
+              <h3 data-page-node-id="PIcMDzUBHFaq0IlyaRfent">Access token 与 Refresh token</h3>
+              <p data-page-node-id="0oPa6s1et4PR34u5j7sUGk">短期 access token 用于调用 API，长期 refresh token 用于换取新的 access token。降低令牌泄露后的可用窗口，并可通过 refresh 轮转检测盗用。实现复杂度高：存储、轮转、重放、吊销。本课单实例浏览器应用不需要这套。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="jwYUho1MCFoijgyHS8tlJJ">
+              <h3 data-page-node-id="wQ3KC5B5LQuSxNcPTv31PD">OAuth 2.0 / OIDC / SSO</h3>
+              <p data-page-node-id="XCiesccwRWaChOqyrG5Xs2">把登录委托给学校的 IdP（Identity Provider，身份提供方）或 GitHub 等。OAuth 2.0 负责授权，OIDC（OpenID Connect）在其之上增加身份认证层。适合多系统共用校园账号。本课要练习的是自己系统内的会话管理、RBAC（Role-Based Access Control，基于角色的访问控制）与班级边界，不接入外部身份。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="DRVSeGm8KZp2HZnS5EICW2">
+              <h3 data-page-node-id="euwz0EKi3araMQ0HVMI1zF">API Key</h3>
+              <p data-page-node-id="9BVF9608hJTWttzFdxWLZw">给机器调用的长期密钥，通常放在请求头。没有浏览器会话、没有登录页。适合脚本与对内服务，不适合教师与学生交互，也难以按用户吊销，无法支撑班级隔离。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="T12X4ajqY2bmZZHCYe9PBQ">本步要核对</h3>
+            <table class="check-table" data-page-node-id="foxse0DTD0fk1xYzaWeyhN">
+              <thead data-page-node-id="W0AK1BtNkGxU8oZd3Fzfjg">
+                <tr data-page-node-id="x9TYw88btDZOeIa6KOpGEJ">
+                  <th data-page-node-id="YCWnyqvsW5GU0dc3HgYnBg">核对项</th>
+                  <th data-page-node-id="seZBNc60gJA8AOxG0pjT8X">本迭代应采用</th>
+                  <th data-page-node-id="U3wdoB2xUz58DxONh8Ftxy">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="cLBv9yGtPuSOZr89wQvIGg">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="5cuf7TgJGKGJ6OuW3MITZP">
+                <tr data-page-node-id="H9Llw1WCnRYnOgnyAjJ7af">
+                  <td data-page-node-id="LRc3MMMWOKOHCCwwrXk7gz">若改用了 JWT，改角色与踢人下线要等多久生效？</td>
+                  <td data-page-node-id="zomAsnWAvXw0V3rH3HnJDd">本迭代不用 JWT；若已改用，登出与改角色的 Scenario 将不再成立。</td>
+                  <td data-page-node-id="QfyBfWWMMAv1wWrwbpZ07g">
+                    <b data-page-node-id="4FFRseLvSkSsy9MRPByMcE">规约</b>：登出与改角色的预期行为<br data-page-node-id="gK8irS0gevLgRV6QpjzdOF"/><b data-page-node-id="wBq5OGCTF5TXRQGfYbvPBo">代码</b>：搜 token 签发与校验代码位置<br data-page-node-id="BsQgOnCPPht81nDMKwqfFV"/><b data-page-node-id="r7ok2oSsmouTjR3utjHmp0">运行</b>：改一次角色后立即请求，看是否仍按旧角色放行
+                  </td>
+                  <td class="tick" data-page-node-id="p0tcTJt2FWFGzvFtJBK9zc">
+                    <span class="cb" data-page-node-id="z1QyzFI6VYHmJgjlt40n5U"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="unit" id="u2" data-page-node-id="kavAyX4rGFUz77iYvgUtxr">
+            <h2 class="unit-h" data-page-node-id="DieRIVHuPC2lfQCvq0Am0Y">
+              <span class="unit-n" data-page-node-id="l3OdDQqd0ZencurcUj5SqE">2</span><span class="unit-t" data-page-node-id="7H6VHg5am2jRtfVKI3QGaq">本课的选择：服务端会话 Cookie</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="D9PNheFeYm2PEHBDkDUISJ"><b data-page-node-id="Fco9INGh3ONv37sjWvZOYe">同源浏览器站点、登出可立刻失效、角色与班级不放进客户端载荷——这三条决定了本课的技术选型。</b></p>
+            <h3 class="unit-sub" data-page-node-id="G6uSPBvvEsSaGjsl17gBna">知识点</h3>
+            <article class="kp-card" data-page-node-id="uSHcoQ65TALOgW6YmioY7O">
+              <h3 data-page-node-id="WHLE8wBISJarLN4uEiUGrh">不透明会话 ID</h3>
+              <p data-page-node-id="RvS3yZsxfVbW57oJqwZkZD">服务端保存会话行，客户端只持有随机 ID。登出删除会话行即失效；角色与班级每次从数据库读取。传输可以走 Cookie（本课），也可以走 Authorization 头，后者需要前端自行存储并附带，容易落入 localStorage。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="Yl68OrNBFCaHVOFLlbg9GA">
+              <h3 data-page-node-id="CqcoEyaxtqVIdaBvZjg0jj">Cookie 与 CSRF / XSS</h3>
+              <p data-page-node-id="qk32rnDypyJebUBryN2DWX">Cookie 会被浏览器在同站请求里自动带上，要防跨站伪造（CSRF）：同源、SameSite、必要时 CSRF token。JWT 放请求头不会自动跨站带出，CSRF 风险面小，但若存入 localStorage，一旦出现 XSS（跨站脚本）漏洞即可被读走。这是一个典型的权衡（trade-off）：<b data-page-node-id="Sq7E4IFeocLjPANUTuZkP0">Cookie 方案主要面临 CSRF 风险，客户端存储 token 主要面临 XSS 风险。</b></p>
+            </article>
+            <figure class="fig" data-page-node-id="MMvVw7a7VRrFGBJnTgJBW8">
+              <svg viewBox="0 0 760 300" role="img" aria-label="服务端会话与 JWT 对比图：状态位置、登出语义与主要风险" data-page-node-id="wQYy5Q2x88MyFdy9AK2Ql1">
+                <defs data-page-node-id="TJ5Pp0yORq94Y0Ts6MC5if"><marker id="f4a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" data-page-node-id="TKCX6jwUPvcPom30GrXB2H"><path d="M0,0 L8,4 L0,8 Z" fill="#7d736c" data-page-node-id="O7sO01fW5x7uETHYNNLdNM"/></marker></defs>
+                <rect x="16" y="16" width="352" height="268" rx="12" fill="none" stroke="#94070a" stroke-dasharray="5 4" data-page-node-id="qFFDI5DMNeAMFORqatXl0O"/>
+                <text x="36" y="46" font-size="13" font-weight="600" fill="#94070a" data-page-node-id="6gncVYwV29sgDgbKiJqe0E">服务端会话 Cookie（本课采用）</text>
+                <rect x="36" y="66" width="140" height="56" rx="8" fill="#f8f6f4" stroke="#e6e1dd" data-page-node-id="Ctdb2ZudcrV3N9slkfa3Sb"/>
+                <text x="106" y="89" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917" data-page-node-id="pKGnXWxAsoAQdpjpigV0G0">浏览器 Cookie</text>
+                <text x="106" y="107" text-anchor="middle" font-size="11" fill="#7d736c" data-page-node-id="Y5vJ5O2lsFvU3Wt552NZln">只持有随机 ID</text>
+                <line x1="176" y1="94" x2="200" y2="94" stroke="#7d736c" stroke-width="1.5" marker-end="url(#f4a)" data-page-node-id="4RnhwuaJLKIZQtcbFpMiLw"/>
+                <rect x="206" y="66" width="140" height="56" rx="8" fill="#fdf3f3" stroke="#94070a" data-page-node-id="NXPOmdFlyTrVxTTYDVMzsn"/>
+                <text x="276" y="89" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917" data-page-node-id="QqzvOKJBBg0GVBN9UHUoK8">服务端会话表</text>
+                <text x="276" y="107" text-anchor="middle" font-size="11" fill="#7d736c" data-page-node-id="tBREntFwKiuu0gkI8UNNBZ">user · role · class</text>
+                <rect x="36" y="152" width="6" height="6" fill="#94070a" data-page-node-id="V5dCkXCeinwDZN49CTjoYp"/>
+                <text x="50" y="159" font-size="12" fill="#453e39" data-page-node-id="BSAOvYqsxb4nYlPA5aNqLN">状态在服务端</text>
+                <rect x="36" y="186" width="6" height="6" fill="#94070a" data-page-node-id="oSovEQEhLnq4dbMaiWNmar"/>
+                <text x="50" y="193" font-size="12" fill="#453e39" data-page-node-id="hJQDxhBjlRx4bXL3vSSFVI">登出 = 删除会话行，立刻失效</text>
+                <rect x="36" y="220" width="6" height="6" fill="#94070a" data-page-node-id="FbmES38qNkKG8QJCKE3c7g"/>
+                <text x="50" y="227" font-size="12" fill="#453e39" data-page-node-id="A64igI1bZKiUF2ZZVgxKL9">主要风险：CSRF → 同源 + SameSite</text>
+                <rect x="36" y="254" width="6" height="6" fill="#94070a" data-page-node-id="uzqRNJHeTpc1mL6TdBUDDl"/>
+                <text x="50" y="261" font-size="12" fill="#453e39" data-page-node-id="opjIEPyHhqyCLbO92PCLBd">角色与班级每次从数据库读取</text>
+                <rect x="392" y="16" width="352" height="268" rx="12" fill="none" stroke="#7d736c" stroke-dasharray="5 4" data-page-node-id="DWNl6QtEyI4VyEitKqHvXY"/>
+                <text x="412" y="46" font-size="13" font-weight="600" fill="#453e39" data-page-node-id="IwqrE0kzTlztMbSujGGeo1">JWT（本课不采用）</text>
+                <rect x="412" y="66" width="140" height="56" rx="8" fill="#f8f6f4" stroke="#e6e1dd" data-page-node-id="xvKZVGyOUW1xXnwf0YbCHa"/>
+                <text x="482" y="89" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917" data-page-node-id="mbnqxulmdNi4swIyc1nOi1">token（三段）</text>
+                <text x="482" y="107" text-anchor="middle" font-size="11" fill="#7d736c" data-page-node-id="HcfoyZ58BraAZHssZFh0bs">role 写在载荷里</text>
+                <line x1="552" y1="94" x2="576" y2="94" stroke="#7d736c" stroke-width="1.5" marker-end="url(#f4a)" data-page-node-id="8ZmP7KZlPN3XHqLDzEY9n0"/>
+                <rect x="582" y="66" width="140" height="56" rx="8" fill="#f8f6f4" stroke="#e6e1dd" data-page-node-id="3xekHLVSBxHTw5yrcuyyT2"/>
+                <text x="652" y="89" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917" data-page-node-id="6g2EbqD2d3UTCPkbPgdpAF">服务端只验签</text>
+                <text x="652" y="107" text-anchor="middle" font-size="11" fill="#7d736c" data-page-node-id="dflyTLESisDcNP90D2KKMG">不查会话表</text>
+                <rect x="412" y="152" width="6" height="6" fill="#7d736c" data-page-node-id="jxPtBmiZ855CgvglDQiqtc"/>
+                <text x="426" y="159" font-size="12" fill="#453e39" data-page-node-id="8fCgfXVpPda62t1PeKZFE3">状态在客户端，载荷默认可见</text>
+                <rect x="412" y="186" width="6" height="6" fill="#7d736c" data-page-node-id="y9ACliEHYf9eJE7LPPpO7M"/>
+                <text x="426" y="193" font-size="12" fill="#453e39" data-page-node-id="asr88WRSnVcEqQjPEb5CFx">登出 ≠ 立刻失效（需另维护黑名单）</text>
+                <rect x="412" y="220" width="6" height="6" fill="#7d736c" data-page-node-id="jdTV46ZNsXoy2RKqNYzfyg"/>
+                <text x="426" y="227" font-size="12" fill="#453e39" data-page-node-id="HbkNYdDCwL6tCUJNJdaHpP">主要风险：XSS 读走 localStorage</text>
+                <rect x="412" y="254" width="6" height="6" fill="#7d736c" data-page-node-id="oujWTloXsMgwT1rqYYrgJD"/>
+                <text x="426" y="261" font-size="12" fill="#453e39" data-page-node-id="Ry5gQmEPC4bJXkpNrqbIAa">改角色要等 token 过期才生效</text>
+              </svg>
+              <figcaption data-page-node-id="WtjvFdglen88MbYI28fxOr">两种登录态的本质差异是「状态放在哪里」：它决定登出语义、改角色的生效时间与主要防范的风险类型。</figcaption>
+            </figure>
+            <h3 class="unit-sub" data-page-node-id="fUHPCTKZHkGRGnsvvnE1lN">本课为何选会话 Cookie</h3>
+            <ul data-page-node-id="2u7bwjomjey3sEif2SjVtb">
+              <li data-page-node-id="UzLI7B1t9TTcyRjCgy1TD8">前后端同源，Nginx 反向代理 <code data-page-node-id="rBAeWPbQJayaWeGfJjINpT">/api</code>，Cookie 自动带上，前端无需自行保管 token。</li>
+              <li data-page-node-id="IOcTV1cGf12GeJna0SMt0U">班级隔离要求每次以服务端身份为准；JWT 载荷中的 class_id 容易诱使实现去信任客户端数据。</li>
+              <li data-page-node-id="8J9KuVKKK7qRCQ5T1iJl30">验收包含登出后 401；会话删行即可判定，JWT 还要额外讲黑名单。</li>
+              <li data-page-node-id="bj90AirwRWsvjvrQPb7CUS">当前单实例。多副本与无状态 JWT 的取舍放到后续部署课，不要提前换方案。</li>
+            </ul>
+            <h3 class="unit-sub" data-page-node-id="JufRvuorHlgGQea25tPQJc">本步要核对</h3>
+            <table class="check-table" data-page-node-id="ccUd9JTuCntHpiCKk38T2b">
+              <thead data-page-node-id="mwXbT5jfMyVk4dSrvrJ8RG">
+                <tr data-page-node-id="HKfDPps3r656Ee6RICQvCy">
+                  <th data-page-node-id="3KYOi8gtWvnoEmSHpSjLn9">核对项</th>
+                  <th data-page-node-id="V7M8CAFCnZn6yCUeQbBm9Y">本迭代应采用</th>
+                  <th data-page-node-id="01tnxzQgSso9FCDaYonOJL">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="J5YHGfUhFGWARTVS97IUJn">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="91rXX8EBQWziH7rBkqBBKf">
+                <tr data-page-node-id="8LD6OMncJuPkVo4cyHGjJk">
+                  <td data-page-node-id="1ObUmPNUnSI2SvMr4VFFvP">登录态实际存在哪里？</td>
+                  <td data-page-node-id="C9foV8r4wImBAoBo0sjW8D">服务端会话表；客户端只持有不透明 ID。</td>
+                  <td data-page-node-id="p28wT2P4akdEskCy3eRS72">
+                    <b data-page-node-id="YgdEs2KgIj5qF1Ho1Y2YHs">规约</b>：是否写明采用服务端会话<br data-page-node-id="hdTHS7I1JryJDaDgcrQiph"/><b data-page-node-id="5N3juyXFT2v5uDQAncCMGk">代码</b>：全局搜 localStorage、jwt、Bearer 关键字<br data-page-node-id="vxe60U82W05wnZlbnk9Cqu"/><b data-page-node-id="frTDsgUmPPmsJjEpVcZDjU">运行</b>：登录后看浏览器存储面板与响应头 Set-Cookie
+                  </td>
+                  <td class="tick" data-page-node-id="AoN7Gm89S6Fz0KyGpDjblW">
+                    <span class="cb" data-page-node-id="F8ZvdsAmWfIdC4kkISDl7u"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="wqlyp3oS6HTilDN1XqSnWj">
+                  <td data-page-node-id="Shq171ACS0ui0kkyjev2NM">登出是否立刻失效？</td>
+                  <td data-page-node-id="4jpgd3tFCfF8ZIr0o0SA1m">删会话行即失效，可判定。</td>
+                  <td data-page-node-id="8wvM43B34KoMg5eMaBC2MD">
+                    <b data-page-node-id="atASGCpNfwiID61hZML37r">规约</b>：登出 Scenario 的预期状态码<br data-page-node-id="8eaiVIA1p70WAbLYuXIssp"/><b data-page-node-id="8PLJFbKOypqq2ptcgi3T1Y">代码</b>：看 logout handler 的删除动作<br data-page-node-id="QckZVC2HL61uWQgvV2DO1j"/><b data-page-node-id="bCT859EDuRs9x7i8snOyBZ">运行</b>：登出后拿旧 Cookie 再请求，应返回 401
+                  </td>
+                  <td class="tick" data-page-node-id="uMaZwWbGxISpTcAGyJfDId">
+                    <span class="cb" data-page-node-id="evLZi6Lj7MGM1Qa1qa1Ad1"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="4mBWR3do3rG7D8TqbwOIel">
+                  <td data-page-node-id="R1MTjRh1rASt9FCgpiBo1t">角色与班级是每请求从服务端读，还是采信客户端？</td>
+                  <td data-page-node-id="9HpLGcOidyUgdg8zZ3RXe7"><b data-page-node-id="LY7j1vPvU97ZexNj6xKaGl">每请求从会话或用户表读取，不采信请求中的角色声明。</b></td>
+                  <td data-page-node-id="vgJwORwkkAH0XNsfKmUEnC">
+                    <b data-page-node-id="6nImY4BfXB86jMEb79DU4C">规约</b>：是否写明不采信客户端声明<br data-page-node-id="bYGbUppu4zvNwIubgjUpG0"/><b data-page-node-id="5L9wtqSCxF8mA35UEfiuo7">代码</b>：搜角色读取来源：会话、数据库，还是请求体<br data-page-node-id="9ZXTgxSnkIx11FFFxe6XPE"/><b data-page-node-id="CPaJbrBLnlwK8IS5d8EYxt">运行</b>：手工改请求体或请求头中的 role，应无效
+                  </td>
+                  <td class="tick" data-page-node-id="WVFcxyndtzTFQr020wjkno">
+                    <span class="cb" data-page-node-id="USgDNhD48Da0F8ARfXMYv0"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <div class="note" data-page-node-id="aRF6GcGFIFKjSpPmqHlRXB">
+            写进迭代说明时，用自己的话写备选方案与否决理由。原文照录本表不算设计决策。
+          </div>
+          <div class="think" data-page-node-id="MvEY4Bin2yq1l4dd29uasE">
+            <h2 data-page-node-id="JwBqskUxtAzPGnRyXiZpIm">想一想：判断与取舍</h2>
+            <p data-page-node-id="a88iNQ4auyCZ2dKkSFMkZ7"><b data-page-node-id="O1MDAjsz9SgMSnV0IR133x">先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul data-page-node-id="lkCB2Gn0F6jB1MFoKKkqGg">
+              <li data-page-node-id="YGiDk0xJshH1TiH5H8Scmd">若采用 JWT，改角色或踢人下线要等多久才生效？规约里的登出 Scenario 还成不成立？</li>
+              <li data-page-node-id="AoFJbBLwFIQE0YbTeXvoBi">Cookie 自动携带与请求头手动携带，分别主要防哪类攻击、引入哪类攻击？</li>
+              <li data-page-node-id="LGwzrDcT8EEZOVLwfJn3Hp">OAuth 解决的是哪一类问题？它能否替代本课的班级隔离实现？</li>
+            </ul>
+          </div>
+          <div class="pager" data-page-node-id="ycQvqqjsZvLArnx2yiEtjB">
+            <a class="btn btn-ghost" href="security.html" data-page-node-id="mX0qtKWA40ANyzgXlqXkJG">← 安全与部署</a><a class="btn btn-ghost" href="roadmap.html" data-page-node-id="FHIMlRHSJhasI69ZwDwJIE">路线图 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

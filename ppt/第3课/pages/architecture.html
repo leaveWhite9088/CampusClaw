@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="A0LHpZZgGwkd0PAe3sTmu4">
+  <head data-page-node-id="q4FJc9oJVVHDX6OjXcqp31">
+    <meta charset="UTF-8" data-page-node-id="Hl2a6S54q29c9JMzEkHFM3"/> <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="Xl1FQOaO4zMq0oGzmRkLa7"/>
+    <title>系统怎么走 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css" data-page-node-id="2SrKqPVo2CHVhuwDq5IvFk"/>
+  </head>
+  <body data-page-node-id="83seRNGtEQsQo4nGJGs1kF">
+    <div class="app" data-page-node-id="zc9Virp7kUCjcmCh73gzER">
+      <aside class="sidebar" id="sidebar" data-page-node-id="gJd8nT66LB3RpkQzXrGKtC">
+        <a class="brand" href="../index.html" data-page-node-id="09nc3lfgEJXVakq82UtNko">CampusClaw<span data-page-node-id="F67D5HuRDveFy6bkwJWpFL">第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航" data-page-node-id="qVfk6KiW0UsJhDf72bUlUT">
+          <p class="nav-label" data-page-node-id="zoMtzuuYhiLGr0sApgrF4G">本课</p>
+          <a href="../index.html" data-page-node-id="imgn0AAw5LMoWnLLVuuHBL">概览</a> <a href="scope.html" data-page-node-id="VUfc2AlZWVxqt9SlzAqfIP">要做成什么样</a> <a href="architecture.html" class="active" data-page-node-id="xXnErTn8GFd79sYLdCPWcf">系统怎么走</a> <a href="security.html" data-page-node-id="gzCCJFC49NYRSNZwUO4bvN">安全与部署</a> <a href="auth-schemes.html" data-page-node-id="zpRDDHeR57Cmhz9WPISjHV">认证方案对照</a>
+          <p class="nav-label" data-page-node-id="tJvbZZWrYGq4PPO8xpftHE">实现步骤</p>
+          <a href="roadmap.html" data-page-node-id="myCszYLkFyHAxQKUvEgMnl">路线图</a> <a href="s1-skeleton.html" data-page-node-id="6kHLAv9FLe6lCv4HAwizGB">1 骨架与配置</a> <a href="s2-data.html" data-page-node-id="s5nYYnH7HtXSCd41bN7Ifb">2 数据与种子</a> <a href="s3-auth.html" data-page-node-id="AmIeGESDIkSXVglEHX3sPE">3 登录与会话</a> <a href="s4-isolation.html" data-page-node-id="Y9t5AAlzj0GId7iOiglGyr">4 班级隔离</a> <a href="s5-upload.html" data-page-node-id="83TQT5eAZYXRPIz35nufmZ">5 上传入库</a> <a href="s6-frontend.html" data-page-node-id="hHmpyu9M5P4u9PmhF3olBq">6 前端页面</a> <a href="s7-compose.html" data-page-node-id="oFdoE2sqTdHQxuPB8ZO2No">7 Compose</a> <a href="s8-verify.html" data-page-node-id="YgJOJwCiduB6Acq7JadAzu">8 验收</a>
+          <p class="nav-label" data-page-node-id="iuySjspqwY9DcgF8GM5M2b">核对</p>
+          <a href="checklist.html" data-page-node-id="uEFrqPZvfF9taLYWFueDdt">核对总表</a>
+          <p class="nav-label" data-page-node-id="uj6DBGebGGXunqqyClCZvB">发布</p>
+          <a href="design.html" data-page-node-id="P9K1FVu1PMyUIVgp4M9TdK">设计决策</a> <a href="apply.html" data-page-node-id="v2ADi9VlCJrmID0FmDiDui">按规约实现</a> <a href="ship.html" data-page-node-id="rtLmso4qWd0Iw0hGRf8jqC">提交清单</a> <a href="nongoals.html" data-page-node-id="ygQCwGbpgdFBhHctWAr8j1">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main" data-page-node-id="qhI8RwvC4xbGu46Wdwp2qu">
+        <header class="topbar" data-page-node-id="FGFHBOJpXwOzhwkIPDUijH">
+          <button class="menu-btn" type="button" id="menuBtn" data-page-node-id="EOiASjSqSXOkiSaHHSWx9s">菜单</button>
+          <div class="crumb" data-page-node-id="vquVCnjySfQSy5C0ZrAb0f">
+            架构
+          </div>
+          <div class="badge" data-page-node-id="z1WmwgDWkO3vuyieEuvpVu">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content" data-page-node-id="AtTXrGmqui6AJ5lPzABABk">
+          <h1 data-page-node-id="1TEJhjVOM3VjF43JXaW5Ym">系统怎么走</h1>
+          <p class="lead" data-page-node-id="G8kUQpMYHGA7CfFuexXv0e">前后端分离。浏览器只访问 Nginx；数据库不要映射到本机端口。</p>
+          <div class="note howto" data-page-node-id="8JLGY6G5YrcFlwjaKMumdF">
+            每步按同一顺序展开：<b data-page-node-id="cxUHGnNLwPeDdB4CxrFvn8">知识点</b> → <b data-page-node-id="697xq2AdLmFwThgVGDKab3">其他可行方案与选择依据</b> → <b data-page-node-id="oGw8TUPk9CjaE2yJvaaJXb">本步要核对</b> → <b data-page-node-id="vHdDuZcBAnGfHYFc35EuiF">动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html" data-page-node-id="zzfBZGoLosDsmDwYKm1Fmd">实现方案核对总表</a>。
+          </div>
+          <nav class="steps" data-page-node-id="6HWFrJVMSsUHEvLhfWvGXX">
+            <p class="steps-h" data-page-node-id="BCNXB3jyJnJHdqwmfA3K2J">本页步骤</p>
+            <a href="#u1" data-page-node-id="kBmVYLzSg2PWIe7oWAKnLb"><span class="steps-n" data-page-node-id="bAVQP2BIDvo800oNdydJcA">1</span><span class="steps-t" data-page-node-id="UiGdAPBiLTjs9PfjKNrY3P">请求链路：浏览器 → Nginx → Go → MySQL</span></a><a href="#u2" data-page-node-id="kIVpYzj0z08LlMhHJAoRTO"><span class="steps-n" data-page-node-id="vXExiVRGU4DjbHtrs9Fbfk">2</span><span class="steps-t" data-page-node-id="OM6mdQ1GEMRfTwzmvSm57W">攻击面最小化：数据库与上传目录不外露</span></a><a href="#u3" data-page-node-id="lY5EzHPjMHT4FYAC3teDXO"><span class="steps-n" data-page-node-id="FdBIaZHjLQnXcQRGD5tZ2j">3</span><span class="steps-t" data-page-node-id="YA62EoOXQYDhVx6nVU79BA">技术选型与接口清单</span></a>
+          </nav>
+          <section class="unit" id="u1" data-page-node-id="ED7LyNeuLkUu3tpFl57vCh">
+            <h2 class="unit-h" data-page-node-id="NiPkmBPFnwYYrFygJB4iJy">
+              <span class="unit-n" data-page-node-id="GJ7ADgLKSSdnE29YOAfDiI">1</span><span class="unit-t" data-page-node-id="JXYAxTqpPxoIvjyRYvMm6K">请求链路：浏览器 → Nginx → Go → MySQL</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="RDFFDEdfHLp4kMBWOsfthi">只有一条链路，信任边界落在 Go；浏览器与静态页一律不可信。</p>
+            <h3 class="unit-sub" data-page-node-id="t8wF5Xunaq1Izc94IDpz4E">知识点</h3>
+            <article class="kp-card" data-page-node-id="D7PgPHVEzRFoydkrnzjMPL">
+              <h3 data-page-node-id="dLmsDcD1eahw4nBe2KJahZ">信任边界在 API</h3>
+              <p data-page-node-id="JAVSmEnkI958nWgmpJvhBQ"><b data-page-node-id="pApV1vKqGG1DKA84vH1YWl">浏览器与静态页不可信。认证、授权、隔离、上传校验全部发生在 Go。</b>Nginx 只托管前端静态资源，并将 /api 反向代理到 Go 后端，不得将上传目录作为静态资源目录暴露。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="JxDlsknTA98tT35MSPYsFd">
+              <h3 data-page-node-id="lPjKtVF823QFj7yFedkpYG">同源与反向代理</h3>
+              <p data-page-node-id="92idHcbLb1tGoUVB2gl7n5">前端通过同源 /api 调用后端，避免跨域请求带来的 Cookie 作用域与 SameSite 策略问题。开发时 Vite 的代理路径应与生产环境 Nginx 保持一致。</p>
+            </article>
+            <figure class="fig">
+              <svg viewBox="0 0 760 300" role="img" aria-label="分层架构图：浏览器经 Nginx 访问 Go 与 MySQL，信任边界在 Go">
+                <defs><marker id="f1a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#7d736c"/></marker></defs>
+                <rect x="196" y="22" width="548" height="240" rx="12" fill="none" stroke="#7d736c" stroke-dasharray="5 4"/>
+                <text x="212" y="44" font-size="11" fill="#7d736c">docker compose 内部网络</text>
+                <rect x="16" y="72" width="120" height="60" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="76" y="97" text-anchor="middle" font-size="13" font-weight="600" fill="#1c1917">浏览器</text>
+                <text x="76" y="115" text-anchor="middle" font-size="11" fill="#7d736c">前端 SPA（不可信）</text>
+                <line x1="136" y1="102" x2="208" y2="102" stroke="#7d736c" stroke-width="1.5" marker-end="url(#f1a)"/>
+                <text x="172" y="90" text-anchor="middle" font-size="11" fill="#1c1917">唯一暴露端口 :8080</text>
+                <rect x="216" y="72" width="140" height="60" rx="8" fill="#ffffff" stroke="#e6e1dd"/>
+                <text x="286" y="97" text-anchor="middle" font-size="13" font-weight="600" fill="#1c1917">web · Nginx</text>
+                <text x="286" y="115" text-anchor="middle" font-size="11" fill="#7d736c">静态资源 + 反代 /api</text>
+                <line x1="356" y1="102" x2="412" y2="102" stroke="#7d736c" stroke-width="1.5" marker-end="url(#f1a)"/>
+                <text x="384" y="90" text-anchor="middle" font-size="11" fill="#1c1917">反代 /api</text>
+                <line x1="404" y1="56" x2="404" y2="240" stroke="#94070a" stroke-dasharray="4 4"/>
+                <text x="404" y="254" text-anchor="middle" font-size="11" fill="#94070a">信任边界：进入 Go 后全部校验</text>
+                <rect x="420" y="72" width="150" height="60" rx="8" fill="#fdf3f3" stroke="#94070a"/>
+                <text x="495" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="#1c1917">api · Go</text>
+                <text x="495" y="109" text-anchor="middle" font-size="11" fill="#7d736c">认证 · 授权 · 隔离</text>
+                <text x="495" y="125" text-anchor="middle" font-size="11" fill="#7d736c">上传校验</text>
+                <line x1="570" y1="102" x2="598" y2="102" stroke="#7d736c" stroke-width="1.5" marker-end="url(#f1a)"/>
+                <text x="584" y="90" text-anchor="middle" font-size="11" fill="#1c1917">普通账号</text>
+                <rect x="604" y="72" width="124" height="60" rx="8" fill="#ffffff" stroke="#e6e1dd"/>
+                <text x="666" y="97" text-anchor="middle" font-size="13" font-weight="600" fill="#1c1917">db · MySQL</text>
+                <text x="666" y="115" text-anchor="middle" font-size="11" fill="#7d736c">不映射宿主端口</text>
+                <line x1="495" y1="132" x2="495" y2="166" stroke="#7d736c" stroke-dasharray="3 3"/>
+                <rect x="420" y="168" width="150" height="46" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="495" y="187" text-anchor="middle" font-size="11" fill="#453e39">上传目录</text>
+                <text x="495" y="203" text-anchor="middle" font-size="11" fill="#7d736c">仅挂载到 api</text>
+                <line x1="666" y1="132" x2="666" y2="166" stroke="#7d736c" stroke-dasharray="3 3"/>
+                <rect x="604" y="168" width="124" height="46" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="666" y="187" text-anchor="middle" font-size="11" fill="#453e39">数据卷 volume</text>
+                <text x="666" y="203" text-anchor="middle" font-size="11" fill="#7d736c">down 后数据仍在</text>
+              </svg>
+              <figcaption>请求链路：浏览器只与 web 通信；认证、授权、隔离与上传校验全部发生在信任边界之后（Go）。</figcaption>
+            </figure>
+            <h3 class="unit-sub" data-page-node-id="y2MVKjAQ43dfOLdWTSKHaX">其他可行方案与选择依据</h3>
+            <table data-page-node-id="DwbQEca1VhiXN4ztO1cZ71">
+              <thead data-page-node-id="RwYbxWVX0Jlatg9oZmjV0j">
+                <tr data-page-node-id="6tOosbFgHUfB2PH9HXR6rB">
+                  <th data-page-node-id="AIqeqF6jHWHFACjruUAUCf">方案</th>
+                  <th data-page-node-id="mPjQxBQGAWzYZ31Hv5Z6Tx">要点</th>
+                  <th data-page-node-id="aiwjZkdkEIue5vPJC0AUxA">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="zJoBoBQbI32p4yVnwEHE0x">
+                <tr data-page-node-id="QOpCdVMVUtCF2EwM7dTOL2">
+                  <td data-page-node-id="5TZsJA4tU1MFx9yF8b8tZN">服务端渲染单体（模板 + 同进程）</td>
+                  <td data-page-node-id="HUxyZHT5LBR5mEa7fDnUF5">页面与接口一体，Cookie 简单。</td>
+                  <td data-page-node-id="OD7vBMyTUnJcbZwkwMtYQG">可行，但当前需求是前后端分离。若第 2 课 design 已写成单体，先改规约或按 design 实现并写清差异。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="aNo7c3m3WYLYzByEQIPuW7">本步要核对</h3>
+            <table class="check-table" data-page-node-id="1T2MFrivB3RJN0dYABZKbo">
+              <thead data-page-node-id="mjan1vNkGiHBvHb9kfm2JF">
+                <tr data-page-node-id="mJRaBY6fk1cDw8DBQ2FKOE">
+                  <th data-page-node-id="XRU8TJ82LrlOdRLP3WNj91">核对项</th>
+                  <th data-page-node-id="zB69KVUGFKHv9P2M2fhUdq">本迭代应采用</th>
+                  <th data-page-node-id="qv4xCFcAJXIWv36glXhj6i">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="pSVhRswEoTkUJ3wG2z2Ed6">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="WkoAqkMYwbuiwxrO6cOt3U">
+                <tr data-page-node-id="IZNjsIyXbDN6RlYJ3MBHkf">
+                  <td data-page-node-id="mmYaEx57HZGY5bbGnTGyE3">请求链路是否只有一条（浏览器 → Nginx → Go → MySQL）？</td>
+                  <td data-page-node-id="tvvfr6ccImIbTjZcHuvsWt"><b data-page-node-id="Q9hAG4MvN4BNxyEOCW1L0U">前端不直连数据库，任何数据访问都必须经过 Go。</b></td>
+                  <td data-page-node-id="vr4UUHztPHIQU7Nlasjaa2">
+                    <b data-page-node-id="EPJrSmJQs7s8BV0EM9DX57">规约</b>：<code data-page-node-id="HEDfVOGVHqdV2Vd9skMAiD">design.md</code>「Decisions / 接口一览」与 <code data-page-node-id="CS78k0ue0D3VNMZHwMAKVo">specs/auth-upload/spec.md</code> 各 Requirement<br data-page-node-id="lQH91li8turnbZeeM8tPNd"/><b data-page-node-id="4ZD1a9f15pTwRSZwTwTrZh">代码</b>：搜前端代码中有无数据库连接或直连后端端口<br data-page-node-id="TxCi0zisC3STqQ2GiHWeJn"/><b data-page-node-id="3QHq1vkvGdKYrDJlxlWc7E">运行</b>：停掉 api 容器，前端应整体不可用而非仍能读数据
+                  </td>
+                  <td class="tick" data-page-node-id="0dpNKmDANvKTgDvQhGl6GP">
+                    <span class="cb" data-page-node-id="VdJV3FiT001A37A9dSTz46"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="UCMvMIRVDbKprTonOSlSrE">
+                  <td data-page-node-id="oCDvVmAhbe40p5VAgyqDVJ">上传目录有没有被 Nginx 当静态目录暴露？</td>
+                  <td data-page-node-id="0ZvMqH1Gn0b1X8kbdG27NN"><b data-page-node-id="2LDTlOuF4NcaVFqoyiDhHA">不做静态暴露，读文件必须先过鉴权接口。</b></td>
+                  <td data-page-node-id="dpVCWkqmpcKiCtSOWNXEIU">
+                    <b data-page-node-id="D6NSbmq7YFRcf5ITtkHl9Q">规约</b>：<code data-page-node-id="v86jPxaKTETNjE2tArHLzS">design.md</code> D1 / D7 与 <code data-page-node-id="MUsMvXCk4DEgEDRLh3nTFS">specs/auth-upload/spec.md</code> R5（材料文件访问）<br data-page-node-id="v8UBg0IMUEIOrBz7U6txPt"/><b data-page-node-id="q3QcputDATUJayksb1cpFt">代码</b>：搜 nginx.conf 中的 location / alias 配置<br data-page-node-id="zM8ihjnAjP2c3D1nbosatW"/><b data-page-node-id="krAesc7xyQKlKqMIov8enY">运行</b>：直接请求 /uploads/&lt;猜测文件名&gt;，应取不到文件
+                  </td>
+                  <td class="tick" data-page-node-id="pzPhFY9my2fBijZG9dX3ix">
+                    <span class="cb" data-page-node-id="aGnlZU5FrnPfE0d3bFNj4G"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="9gtBG3gxBBIF1dH1xcNx0E">
+                  <td data-page-node-id="FSCTGjzJbgmxuqLod7KnPi">/api 是否同源反向代理，开发与生产路径是否一致？</td>
+                  <td data-page-node-id="rAcPpRWrQhO7ECPdFm88NR">同源；开发时 Vite 代理路径与生产 Nginx 保持一致。</td>
+                  <td data-page-node-id="zbqP4hn9Yy64Vp0NKP8sI8">
+                    <b data-page-node-id="Vt1IocolKynKXKLaEJQ5Ws">规约</b>：<code data-page-node-id="BE92SsIyzjOqVYd1tWnZuY">design.md</code> D1（同源 /api）与 R1 未登录 Scenario<br data-page-node-id="PAC9HnChciWnLM6eYMnEoi"/><b data-page-node-id="EivtAYtpDg2fzlQefe9qeM">代码</b>：对比 vite.config 与 nginx.conf 的代理路径<br data-page-node-id="6Lg41woqPOyKNnHfHREnZA"/><b data-page-node-id="9A3aICuCK0kphACD2fYIwj">运行</b>：开发环境与 Compose 环境各调一次 /api/me
+                  </td>
+                  <td class="tick" data-page-node-id="LdwjV0PnNvIt82iLCTOT7o">
+                    <span class="cb" data-page-node-id="s8Iw6glztQ1s27ySPZDjrS"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="1oVSp718Ez0PqBPGKi1iyj">动手要做</h3>
+            <ol data-page-node-id="6CGorBXb5ptQmTptiN76xA">
+              <li data-page-node-id="eFpZLHB4vmdfe6xIDildRV">浏览器访问 Nginx 提供的前端页面（默认 <code data-page-node-id="soIiSlvE295ypsnBmK0myS">http://localhost:8080</code>）。</li>
+              <li data-page-node-id="4UsxpPlwDULykI7pfj3Rzx">前端通过同源 <code data-page-node-id="SsH8ZHA6mTjOz35nqYvpuv">/api</code> 调用 Go。</li>
+              <li data-page-node-id="K5EqBv8opVAzs4Ddxc6cNl">Go 负责认证、授权、班级隔离和材料处理。</li>
+              <li data-page-node-id="ZVsCvBIw2cVeBGeOxv4jYr">MySQL 保存用户、班级、会话、材料与知识库正文；原文件放服务器上传目录，只挂在 api 上，不要经 Nginx 静态暴露。</li>
+            </ol>
+          </section>
+          <section class="unit" id="u2" data-page-node-id="JffcgFV3b8yKCUVCA14ezf">
+            <h2 class="unit-h" data-page-node-id="zitFlEBXpsd4VVsFHYmJ5v">
+              <span class="unit-n" data-page-node-id="cUROv6xq7CEioCfOBJ4y6i">2</span><span class="unit-t" data-page-node-id="ANF7BAGhl4bMl1wMBDF7Xs">攻击面最小化：数据库与上传目录不外露</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="xR3xHBW7F7FdxHCeEtXc8d"><b data-page-node-id="H7KZYXlcPFJL5NKuYlZNX5">不映射数据库端口、不把上传目录当静态站，是最省成本的默认拒绝。</b></p>
+            <h3 class="unit-sub" data-page-node-id="2zSHuFjwSnCh4Tm1j6FCXr">知识点</h3>
+            <article class="kp-card" data-page-node-id="xHUyOxBD9KkAwK1Ce5Uyv1">
+              <h3 data-page-node-id="js2G0YV9tE1yTxrxLQjvwa">攻击面最小化</h3>
+              <p data-page-node-id="G1BeamKrFM1tPtj9cviw6T">db 只在 Compose 内部网络。对外只暴露 web 端口。能扫到的端口越少，越权探测的入口越少。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="7SAE37mUXTLitDki2kzEv6">其他可行方案与选择依据</h3>
+            <table data-page-node-id="Gans7Kyv1N9AUrWGMLixu9">
+              <thead data-page-node-id="EsGue2MpUpr6THKhpXEgox">
+                <tr data-page-node-id="bcikEbPFUDesP6YQnijxOG">
+                  <th data-page-node-id="DvlEutFkJeT0Kt14M4EtIt">方案</th>
+                  <th data-page-node-id="5K3mYXf9kgIEEHSWY7yEvK">要点</th>
+                  <th data-page-node-id="7Vti0NrpAJlEYV5KFzBHqM">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="hR3WE6CfYjpSOQmxBOGJHS">
+                <tr data-page-node-id="Lw8PiaoszY3TdidgDSt3gM">
+                  <td data-page-node-id="j8Rvbf3pTFByXVSuE8aGVO">数据库映射到本机 3306</td>
+                  <td data-page-node-id="Zd9Na1tLmOshQj3H1ey1xf">便于用图形化客户端连接数据库排障。</td>
+                  <td data-page-node-id="YQfzYMx9IDXV6AVMv3bL7O">否决作为默认。扩大攻击面；查询数据库时通过 compose exec 进入容器执行。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="XTVZ2uRGIwZjQiDZGdEGFR">本步要核对</h3>
+            <table class="check-table" data-page-node-id="NLaXzTrNTEFDLdK57ta3nd">
+              <thead data-page-node-id="ZLbpuUWPvFF43zwBv2UW6c">
+                <tr data-page-node-id="mC5IXFdteUrCEyKjXXEuOR">
+                  <th data-page-node-id="G1FWuO9zwTOnGYOspN0Dfs">核对项</th>
+                  <th data-page-node-id="NfFoDtC1SdpoIcOjRCQtZX">本迭代应采用</th>
+                  <th data-page-node-id="dNKpBn2XUXTgdKEw6wDcL6">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="Sbl995FvpeKNF0UgyweWEY">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="1b9oAJZRySewnh05FLXfg5">
+                <tr data-page-node-id="mL7sqrDODYautldq8BosEb">
+                  <td data-page-node-id="Yb98M0LXtqRgWecaQfMB05">数据库有没有映射到宿主端口？</td>
+                  <td data-page-node-id="gAfE23eKs6bFS296fuhwoe">只在 Compose 内部网络可达，不映射 3306。</td>
+                  <td data-page-node-id="9VFXOOeQylghaP7SCNl4l3">
+                    <b data-page-node-id="U3IKZlna7OFujxInA6pyJW">规约</b>：<code data-page-node-id="uZcGRJve6XgT3vTzLukdpO">design.md</code>「配置与启动」与 Compose 网络约定<br data-page-node-id="4eDwLeDUGHOfLAdmJCTR9I"/><b data-page-node-id="pS8iabqHcqyz1X2DMg4t3L">代码</b>：看 docker-compose.yml 中 db 服务的 ports<br data-page-node-id="oDSFbfverGAvbY5yGleRu2"/><b data-page-node-id="UwgbEUZpUHuWYVsNDlsWi2">运行</b>：本机尝试连接 3306，应连不上
+                  </td>
+                  <td class="tick" data-page-node-id="P6nOoLG4XO6HPtSBEPCDBO">
+                    <span class="cb" data-page-node-id="U6hWEqWAChn5IVOA5xHXG3"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="unit" id="u3" data-page-node-id="TUynDmR7yxCyR8nx4oMeNg">
+            <h2 class="unit-h" data-page-node-id="h28IRJfYMIeSAtQ53pmgU6">
+              <span class="unit-n" data-page-node-id="bcno4icbqT6kSlFzr2MX61">3</span><span class="unit-t" data-page-node-id="U5nK7QGSfqvVbBXPLWKBm9">技术选型与接口清单</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="LKuHuANv8OYrh971TLwMzF">选型表与接口表是规约的对照面：接口签名必须与规约逐条对应。</p>
+            <h3 class="unit-sub" data-page-node-id="pDnHDw3HOQU8iqert6NTOw">知识点</h3>
+            <article class="kp-card" data-page-node-id="AYQNyghic5LZMB6nrvB0rR">
+              <h3 data-page-node-id="d3vGLqMEpemSKctxU69mx7">这套技术栈都是主流技术</h3>
+              <p data-page-node-id="lyKRmRAI9399pzvuzOsBbS">本迭代每一项选型都是各自位置上使用最广、资料最多的选择，遇到问题在官方文档与社区能找到现成答案：</p>
+              <ul data-page-node-id="WuH0GHPvEJMFrpzSY5H1Vk">
+                <li data-page-node-id="yjb84ZSWKbfbu2DlCXtjzA">
+                  <b data-page-node-id="nzkvkB2Rp77uTG9DipaCr2">前端</b>：React 18 + TypeScript + Vite，当前前端工程的主流组合（组件化、静态类型、构建工具）。
+                </li>
+                <li data-page-node-id="1T9Kqa4ynfeqlNGwk5krtA">
+                  <b data-page-node-id="JtxA4b1w3wKtVJp0cqgH0F">后端</b>：Go + 标准库 <code data-page-node-id="SMNW0vanVffkLFkJuDS1lW">net/http</code>，不引入 Web 框架，把需要评估的变量降到最低。
+                </li>
+                <li data-page-node-id="oZqhZuFbOwZs46Xk2NfRxt">
+                  <b data-page-node-id="HKJHxTVsAufv8Eu9dt0hLq">数据库</b>：MySQL 8.0，使用最广的关系型数据库，本机与云上都容易获得。
+                </li>
+                <li data-page-node-id="MkoBd7vLmIHALrQoVE8hN6">
+                  <b data-page-node-id="1rtfEQwMbDzUuBxopaaMJq">入口与部署</b>：Nginx（最主流的反向代理与静态资源服务器）+ Docker Compose（单机多容器编排的通用入口）。
+                </li>
+              </ul>
+              <p data-page-node-id="QjcjSUdGmApsVryi1RzS6c">本课重点是访问控制与数据隔离，不在选型上做冷门尝试：方案越主流，越能把注意力放在“谁能看到什么数据”上。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="Oco5OfHjOTFuvz8bKOM8GY">其他可行方案与选择依据</h3>
+            <table data-page-node-id="3QD2JAFzEkM4Tn8zHtMvwX">
+              <thead data-page-node-id="hqQXnRqiHuNr6nEki1ATX2">
+                <tr data-page-node-id="qVbaj4GdmXuIiLDI03sOPX">
+                  <th data-page-node-id="8eMJXGtETx3x4jjC37Ebvg">方案</th>
+                  <th data-page-node-id="uvQP13z9Ame8m74mHOCkZK">要点</th>
+                  <th data-page-node-id="l4fGvAaAD0Q3BMpn2fRvga">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="4HxZWB8CMKSVaCZYOkURKi">
+                <tr data-page-node-id="pRxKXbrglJbMwAwlia2Efe">
+                  <td data-page-node-id="Wte94sFsQrPwlIZsCoVhzp">Flask + SQLite（第 2 课示例的常见技术栈）</td>
+                  <td data-page-node-id="EyKZCnpiXP1s0joJay0ico">本地部署轻量，无需独立的 db 容器。</td>
+                  <td data-page-node-id="ViIPCoXCCZ2pxiSeonD3ZZ">当前需求用 Go + MySQL，为后续检索与多连接做准备。SQLite 的文件锁与 Compose 环境等价性较弱。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="pdkjusWne7FqabVLLBhLp5">本步要核对</h3>
+            <table class="check-table" data-page-node-id="EcigzChNd86oxLd4YcV44Y">
+              <thead data-page-node-id="54JscFFCC81zUmwI4VbRi2">
+                <tr data-page-node-id="ox9O4zfwuu4YqPpOwPR39P">
+                  <th data-page-node-id="H0PnbudA2odYjQHQJnLHz4">核对项</th>
+                  <th data-page-node-id="cW16vvbZYYOskKECXPeTtF">本迭代应采用</th>
+                  <th data-page-node-id="EkBcr8kmNS2EWoSfIv1g8A">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="5GJb9w8k9cCZvBhoxolivw">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="CmsoN0j6jHJj0oLaSLSBwB">
+                <tr data-page-node-id="I95nOkoEASQbcNnYesZe7Y">
+                  <td data-page-node-id="J946bKHrc7AsDL8DBGYtN5">接口清单与规约是否一一对应？</td>
+                  <td data-page-node-id="h8EBdqYAJF3iT2SWR0ql7b">路径、鉴权要求、跨班返回码三者一致，无多出或少掉的接口。</td>
+                  <td data-page-node-id="cPJVF2PA0bF8Ka93BVPdGF">
+                    <b data-page-node-id="jjvxrD83SU0DjgV1NgD4qm">规约</b>：<code data-page-node-id="LnAXUXhHuAWCVBOdVG4MnI">design.md</code>「接口一览」逐条对照 <code data-page-node-id="RHbwj1iqmjKc36LHoCh0U5">specs/auth-upload/spec.md</code> R1–R5<br data-page-node-id="nK2jOjgsMI09CoKnggbWDJ"/><b data-page-node-id="M0Se0JtTMnggEGFR7Ikk9w">代码</b>：搜路由注册表，与规约逐条比对<br data-page-node-id="GDAnedf8X7xAwkSvVySyBu"/><b data-page-node-id="5QAsYOVuPESHFczs2QOvqT">运行</b>：对每个接口各跑一次未登录与跨班请求
+                  </td>
+                  <td class="tick" data-page-node-id="l8ateOuqAeErYenaGf7Ka0">
+                    <span class="cb" data-page-node-id="VBVMFMjSeQ4yAfZS95DqRW"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="UgWrHaLHRKeBg8W4Hrlw7R">前端</h3>
+            <table data-page-node-id="glsAB6T20YNnAjDtNlmCD1">
+              <thead data-page-node-id="0kr29BB0Cdy0ZJckNlmfD1">
+                <tr data-page-node-id="bmMyv98lpN5GO9MRqXrAts">
+                  <th data-page-node-id="iEgLQX2mxOUhgotzEw5qbl">项</th>
+                  <th data-page-node-id="42zdlm90AcYgioWSCuCiHk">选型与用途</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="r8GUKexwb1Z1e1TYV6I0l2">
+                <tr data-page-node-id="7JwKchFzdgdNZDLvqgCKd3">
+                  <td data-page-node-id="ioFB773oNGmLE9FPRzz9hn">React 18</td>
+                  <td data-page-node-id="IQzzgUsEZTq7FTxtIDkSZo">用户界面</td>
+                </tr>
+                <tr data-page-node-id="PMZstsEFnWtRamrIJVCw8D">
+                  <td data-page-node-id="AAqBu6FJB4w0YEZTyOpL1w">TypeScript</td>
+                  <td data-page-node-id="wYEBC0FJnramke0VkUnfsJ">静态类型</td>
+                </tr>
+                <tr data-page-node-id="EP8ma2g8bBjTnleLdaQzdW">
+                  <td data-page-node-id="jWhqHK2GRAuQzZo5vgXRzF">Vite</td>
+                  <td data-page-node-id="CXIZxTlByuLUzXCnVIXwiC">开发服务器与生产构建</td>
+                </tr>
+                <tr data-page-node-id="8cF8jdBd3gh2KubutQuVYl">
+                  <td data-page-node-id="CIifd96PMbYkDAe94RLiZD">React Markdown + Remark GFM（GitHub Flavored Markdown）</td>
+                  <td data-page-node-id="CRyWXBeXIbUkZFvP6g1hvs">格式化展示 Markdown 材料</td>
+                </tr>
+                <tr data-page-node-id="GbywAa8DXtvHj3LdsjlvTm">
+                  <td data-page-node-id="EAo5bFdd3vygbFipiKO8x2">原生 CSS</td>
+                  <td data-page-node-id="pD0Jl4SJ8IFG42qH4WyPBQ">设计系统、深色模式、响应式</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="fDBIC3ZQGzPiCGXUYUFNnl">后端</h3>
+            <table data-page-node-id="LYRielV9jZhV99Z00ikwmH">
+              <thead data-page-node-id="roghHEDvPvfeVfXLpeEwyn">
+                <tr data-page-node-id="Hl1BpbFBRYiKViSRSb1LQM">
+                  <th data-page-node-id="wdAFzcU1vcT0z3oRImC0DH">项</th>
+                  <th data-page-node-id="0wyuJVLbx3YCFmqS8nbRyb">选型与用途</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="XR47RYaPzAmPVCMnvLQGjm">
+                <tr data-page-node-id="ASybGFHLZQrNqjQH0DeUq5">
+                  <td data-page-node-id="zW3HqbocYfyPp1pxxKhAjc">Go + <code data-page-node-id="nY8xQOIntBNTFUwHygQNuy">net/http</code></td>
+                  <td data-page-node-id="WAD4qwsbmYenNE1UztRnRc">HTTP API 与业务逻辑</td>
+                </tr>
+                <tr data-page-node-id="kLedX7D4IB0RW4kUEGr90h">
+                  <td data-page-node-id="e55RJ8NUWieaitOxArAI0b">MySQL 驱动</td>
+                  <td data-page-node-id="CWFv634AdQQtPAY34wCKWb">连接与操作 MySQL</td>
+                </tr>
+                <tr data-page-node-id="Ops82fAUCtwGuNUWZFyNdh">
+                  <td data-page-node-id="BlbKfjTP5BmPAXBd8vCJZb">bcrypt</td>
+                  <td data-page-node-id="Y0Y7qJNoBdxBv9Hrz7FkHB">口令哈希</td>
+                </tr>
+                <tr data-page-node-id="fES8aOrC2Od7Noepw0tZJc">
+                  <td data-page-node-id="em2WCuaAYHvGZsVEjGdA0S">服务端 Session Cookie</td>
+                  <td data-page-node-id="s0P7jL2DdFmPW1Io4w4TRo">登录状态；本迭代不使用 JWT / Bearer token</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="RqrMy6xotkrJG6kJ3hUP66">数据与部署</h3>
+            <table data-page-node-id="TMlnNRD4lKBb0viyURBzEp">
+              <thead data-page-node-id="w2mj0PC7fGULbrrok5IieD">
+                <tr data-page-node-id="yTXRqlATdzGGHKnp1AZrrr">
+                  <th data-page-node-id="fQtpqyu8nvGNy6qYiljjHI">项</th>
+                  <th data-page-node-id="YdHRp6L2pkHUw0FwZPc3Ec">选型与用途</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="brvaXgse49wzLC7XzPqUQ3">
+                <tr data-page-node-id="0sXbbzkELm1DieLmpfOaoR">
+                  <td data-page-node-id="lRm6tJW0c40YTy1OuSuUAw">MySQL 8.0</td>
+                  <td data-page-node-id="n0jt81BsJMqGbSrxYjzjS8">用户、班级、会话、材料、知识库正文</td>
+                </tr>
+                <tr data-page-node-id="BHsyNaXve4E0lleAx4cdeD">
+                  <td data-page-node-id="Q5lYQfCVJTm4eT0gf7hfxm">Nginx</td>
+                  <td data-page-node-id="oVCHiqfXHHFDPkE2xnFEeo">托管前端静态资源，反向代理 <code data-page-node-id="1543VEK5Bk20emk7dIE3Fw">/api</code> 与 <code data-page-node-id="jhT8ei7XKCO2Uja3uWwECK">/health</code></td>
+                </tr>
+                <tr data-page-node-id="xqaYIqyFKA6h4zst6z5O6J">
+                  <td data-page-node-id="Okavk9A2NrAVE3ImmVX08k">Docker Compose</td>
+                  <td data-page-node-id="D3djJ2ZitQOw64IVuQ7DZP">统一构建并启动 web、api、db</td>
+                </tr>
+                <tr data-page-node-id="qhIvvJLEFxcB8Cok5AqDck">
+                  <td data-page-node-id="ESeVlu6SC9ZUpTPnARExv9">环境变量 / <code data-page-node-id="sBbkLesjxlDhBIGbGuDJVL">.env</code></td>
+                  <td data-page-node-id="lcpgAvNmQA1lepbXPKvBkD">数据库凭据、会话密钥、端口、预置账号口令</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="1ApB0a533LjwkCitR5PHkr">接口一览</h3>
+            <table data-page-node-id="PZYdAsGWs8p2msvTCuwTZd">
+              <thead data-page-node-id="ZC4Ud8RvBbwAzpmRx0wbhC">
+                <tr data-page-node-id="QmrURPwHVWnRQ9GfSis8Bv">
+                  <th data-page-node-id="SKZ6Tteep3S9PFndMgek2W">方法与路径</th>
+                  <th data-page-node-id="NdozI89z3kizxaNtKVUYR2">鉴权</th>
+                  <th data-page-node-id="oc7QOy2O5Vnc2GWhchu10X">说明</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="LJt37FpMotVreAs1oeCNCi">
+                <tr data-page-node-id="2kr80drPyPkkAPGHDuKF5x">
+                  <td data-page-node-id="nlebb0RzE5PxQ93q4PaLfl">
+                    <code data-page-node-id="RPxcHcJGUM2f50HIFSwMAN">POST /api/login</code>
+                  </td>
+                  <td data-page-node-id="9mqdQGD1JDpiDSqQZtR8lC">无</td>
+                  <td data-page-node-id="KPnm2RMj3Fyi4JFGdzxeGu">校验口令、限流、签发会话</td>
+                </tr>
+                <tr data-page-node-id="hbZub4Mo0WDfNsQqOHbxtf">
+                  <td data-page-node-id="BdaLrSXLmXCgAB5bsd491L">
+                    <code data-page-node-id="sclC1CIAVPsPldeIvVQyJD">POST /api/logout</code>
+                  </td>
+                  <td data-page-node-id="WJb9sCoGr3heCRXBGmzxfX">会话</td>
+                  <td data-page-node-id="z3xpe21Fa7fxZziouD4Sfo">删除服务端会话并清 Cookie</td>
+                </tr>
+                <tr data-page-node-id="cblFANEKammlgWoNvjcapK">
+                  <td data-page-node-id="XuasXurnoMdOiCInFjD5MM">
+                    <code data-page-node-id="OoTwQTY0963xwXQgqQJedL">GET /api/me</code>
+                  </td>
+                  <td data-page-node-id="2Yy7pck6YXbJ3tHIFinFxY">会话</td>
+                  <td data-page-node-id="A4abOdpgSr4wQDxfdxkxXQ">返回角色与班级，供前端决定是否显示上传</td>
+                </tr>
+                <tr data-page-node-id="AkWFsNv2BrrQky4zOPeUNR">
+                  <td data-page-node-id="CbOC3vic0ulKU3EGMUnbQ6">
+                    <code data-page-node-id="UE2tOyg8yKDAQc8C5q43Fg">GET /api/materials</code>
+                  </td>
+                  <td data-page-node-id="cnowYtjr0Y7us6S5jYXu0Z">会话</td>
+                  <td data-page-node-id="sMirM8WNWdbV9XtYNAn2ox">按会话班级过滤的列表与搜索</td>
+                </tr>
+                <tr data-page-node-id="7mBBtXlyk5pprA2EjlRF0K">
+                  <td data-page-node-id="4iqyQwDRMXRYkBNVzeG2MR">
+                    <code data-page-node-id="2kvUiFy6wJpGTnSCtNprrJ">GET /api/materials/{id}</code>
+                  </td>
+                  <td data-page-node-id="N4iIfucVhyBUwpxs92UHDo">会话 + 班级</td>
+                  <td data-page-node-id="ZgJA8BZVRMT9QQgumtUGjg">详情与知识库正文，跨班 404</td>
+                </tr>
+                <tr data-page-node-id="f28ICvOZjw8ecC3NQWn70h">
+                  <td data-page-node-id="CoIScIcXDiBNLIh3YREhXL">
+                    <code data-page-node-id="CWH6QrYDSGIGQkwzUG8Nqu">GET /api/materials/{id}/file</code>
+                  </td>
+                  <td data-page-node-id="w2suvfSAii3eNekxlmmRl0">会话 + 班级</td>
+                  <td data-page-node-id="FoQ1HVaIbTBHAfAgqAGT20">下载原文件，跨班 404</td>
+                </tr>
+                <tr data-page-node-id="EwMCG5OUEmFuBaSmtad0Hr">
+                  <td data-page-node-id="D9qCzqiWMbddaBrLJzNC88">
+                    <code data-page-node-id="QZl4S1jDoHdz9CLEcC2Wtc">POST /api/materials</code>
+                  </td>
+                  <td data-page-node-id="hiLvF3FGv7JOjhUOKnM5u6">会话 + 教师</td>
+                  <td data-page-node-id="o38v9DR3tssnBfZzqN3Mq6">上传入库</td>
+                </tr>
+                <tr data-page-node-id="UzFGlCHtoDc1ImxdASjClo">
+                  <td data-page-node-id="kBRvwtpVOV1oddPDbpFz7e">
+                    <code data-page-node-id="27DBLprGYVDTpQ7gUQAjAE">GET /health</code>
+                  </td>
+                  <td data-page-node-id="tPE9UoPBVD6FX9EBc6Jwat">无</td>
+                  <td data-page-node-id="ai3N0tKROZekLZd8EiIv5o">存活判定</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <p class="note" data-page-node-id="RVQbGYXLJW12RSuTfTRll7">把否决理由用自己的话写进 design / 迭代说明；原文照录本表不算 ADR。</p>
+          <div class="think" data-page-node-id="HZAuPAZAxmiTB9KULPMEoP">
+            <h2 data-page-node-id="wjsBYGfvImA4XoVX0iaOkU">想一想：判断与取舍</h2>
+            <p data-page-node-id="3twc7NhWDR5r5FPs43eZ6O"><b data-page-node-id="oDwwqQE3H7QPYLG34xOhzk">先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul data-page-node-id="27q5R2VDvfqImz2mNcAE1e">
+              <li data-page-node-id="2gJHGMGzdSo3AsDySzmI34">为什么材料文件不能用 Nginx 静态目录直接提供？未登录或跨班用猜测路径访问时，规约如何写失败条件？</li>
+            </ul>
+          </div>
+          <div class="pager" data-page-node-id="LbV7xAv4nL8jnRZdM88y9f">
+            <a class="btn btn-ghost" href="scope.html" data-page-node-id="IyIwTrgLpPAzqJ4unTKn8N">← 要做成什么样</a><a class="btn btn-ghost" href="security.html" data-page-node-id="SO4m65YC3GFC1I4up5goPD">安全与部署 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

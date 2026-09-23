@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8"/> <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>安全与部署 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css"/>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="../index.html">CampusClaw<span>第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航">
+          <p class="nav-label">本课</p>
+          <a href="../index.html">概览</a> <a href="scope.html">要做成什么样</a> <a href="architecture.html">系统怎么走</a> <a href="security.html" class="active">安全与部署</a> <a href="auth-schemes.html">认证方案对照</a>
+          <p class="nav-label">实现步骤</p>
+          <a href="roadmap.html">路线图</a> <a href="s1-skeleton.html">1 骨架与配置</a> <a href="s2-data.html">2 数据与种子</a> <a href="s3-auth.html">3 登录与会话</a> <a href="s4-isolation.html">4 班级隔离</a> <a href="s5-upload.html">5 上传入库</a> <a href="s6-frontend.html">6 前端页面</a> <a href="s7-compose.html">7 Compose</a> <a href="s8-verify.html">8 验收</a>
+          <p class="nav-label">核对</p>
+          <a href="checklist.html">核对总表</a>
+          <p class="nav-label">发布</p>
+          <a href="design.html">设计决策</a> <a href="apply.html">按规约实现</a> <a href="ship.html">提交清单</a> <a href="nongoals.html">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <button class="menu-btn" type="button" id="menuBtn">菜单</button>
+          <div class="crumb">
+            安全
+          </div>
+          <div class="badge">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content">
+          <h1>安全与部署</h1>
+          <p class="lead">权限与班级边界必须在服务端成立。页面隐藏入口不算完成。</p>
+          <div class="note howto">
+            每步按同一顺序展开：<b>知识点</b> → <b>其他可行方案与选择依据</b> → <b>本步要核对</b> → <b>动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html">实现方案核对总表</a>。
+          </div>
+          <nav class="steps">
+            <p class="steps-h">本页步骤</p>
+            <a href="#u1"><span class="steps-n">1</span><span class="steps-t">凭据怎么存：哈希与环境变量</span></a><a href="#u2"><span class="steps-n">2</span><span class="steps-t">失败响应同形：不给账号枚举留依据</span></a><a href="#u3"><span class="steps-n">3</span><span class="steps-t">部署侧默认拒绝：探针与网络</span></a>
+          </nav>
+          <section class="unit" id="u1">
+            <h2 class="unit-h">
+              <span class="unit-n">1</span><span class="unit-t">凭据怎么存：哈希与环境变量</span>
+            </h2>
+            <p class="unit-lead">口令只以加盐慢哈希入库，所有密钥来自环境变量；缺失就启动失败，不留内置默认值。</p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>口令与会话密钥</h3>
+              <p>明文口令一旦入库即失去意义。用加盐慢哈希（bcrypt，一种专门用于口令的慢哈希算法）增加离线破解成本。SESSION_SECRET 用于保护会话标识，缺失必须启动失败，禁止内置默认值。<b>密钥进 Git 是发布阻断项，泄漏后要轮换而不是只删提交。</b></p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>argon2 替代 bcrypt</td>
+                  <td>同为加盐慢哈希，argon2 更抗 GPU 并行破解。</td>
+                  <td>可。本课用 bcrypt，Go 官方扩展库即可实现；不要存明文或可逆加密。</td>
+                </tr>
+                <tr>
+                  <td>密钥写进源码默认值</td>
+                  <td>本地环境始终可用。</td>
+                  <td>否决。缺失必须启动失败。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>口令是以哈希形式保存的吗？</td>
+                  <td>bcrypt 加盐慢哈希；不存明文，也不用可逆加密。</td>
+                  <td>
+                    <b>规约</b>：<code>specs/auth-upload/spec.md</code> R7（密码哈希与会话密钥）<br/><b>代码</b>：搜明文赋值与哈希调用位置<br/><b>运行</b>：直接查 users 表，看口令字段形态
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>会话密钥与数据库口令来自环境变量吗？</td>
+                  <td>只来自环境变量；缺失则启动失败，无内置默认值。</td>
+                  <td>
+                    <b>规约</b>：<code>specs/auth-upload/spec.md</code> R7.3 / R7.5 与 <code>design.md</code>「配置与启动」<br/><b>代码</b>：搜默认值常量与 os.Getenv / process.env 读取点<br/><b>运行</b>：删掉 .env 后启动，应失败而非照常启动
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>密钥有没有进过仓库历史？</td>
+                  <td>无。若曾提交，必须轮换而不是只删提交。</td>
+                  <td>
+                    <b>规约</b>：是否写明密钥不入库<br/><b>代码</b>：git log 检索密钥关键字<br/><b>运行</b>：克隆一份仓库到干净目录，全局搜密钥
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>口令用 bcrypt 哈希保存，不存明文。</li>
+              <li>登录状态用 <code>HttpOnly</code>、<code>SameSite=Lax</code> Cookie 维护。</li>
+              <li>口令、数据库凭据、会话密钥走环境变量；缺失则启动失败，不要内置默认值。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u2">
+            <h2 class="unit-h">
+              <span class="unit-n">2</span><span class="unit-t">失败响应同形：不给账号枚举留依据</span>
+            </h2>
+            <p class="unit-lead">未登录、越权、口令错误对外必须给出无法区分的响应，排障信息只进服务端日志。</p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>默认拒绝与完整校验</h3>
+              <p>未登录默认 401；未知角色不能升权。每次请求都要从会话再读角色与班级，<b>不能信任上一次缓存在浏览器里的声明。</b></p>
+            </article>
+            <article class="kp-card">
+              <h3>信息隐藏</h3>
+              <p>错误提示、限流响应、跨班响应都可能成为账号枚举的依据。<b>对外统一失败响应，排障信息只记录在服务端日志。</b></p>
+            </article>
+            <figure class="fig">
+              <svg viewBox="0 0 760 280" role="img" aria-label="失败响应同形：账号不存在、口令错误、触发限流三种原因对外返回同一响应，攻击者无法区分">
+                <defs>
+                  <marker id="se2g" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#7d736c"/></marker>
+                </defs>
+                <rect x="24" y="28" width="170" height="52" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="109" y="59" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917">账号不存在</text>
+                <rect x="24" y="100" width="170" height="52" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="109" y="131" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917">口令错误</text>
+                <rect x="24" y="172" width="170" height="52" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="109" y="203" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917">触发限流</text>
+                <line x1="194" y1="54" x2="288" y2="108" stroke="#7d736c" stroke-width="1.5" marker-end="url(#se2g)"/>
+                <line x1="194" y1="126" x2="288" y2="126" stroke="#7d736c" stroke-width="1.5" marker-end="url(#se2g)"/>
+                <line x1="194" y1="198" x2="288" y2="144" stroke="#7d736c" stroke-width="1.5" marker-end="url(#se2g)"/>
+                <rect x="294" y="76" width="210" height="100" rx="8" fill="#fdf3f3" stroke="#94070a"/>
+                <text x="399" y="104" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917">对外：同一响应</text>
+                <text x="399" y="124" text-anchor="middle" font-size="11" fill="#94070a">相同状态码 · 相同文案</text>
+                <text x="399" y="142" text-anchor="middle" font-size="11" fill="#94070a">相近耗时</text>
+                <text x="399" y="162" text-anchor="middle" font-size="11" fill="#7d736c">三种原因不可区分</text>
+                <line x1="504" y1="126" x2="548" y2="126" stroke="#7d736c" stroke-width="1.5" marker-end="url(#se2g)"/>
+                <rect x="554" y="76" width="182" height="100" rx="8" fill="#f8f6f4" stroke="#e6e1dd"/>
+                <text x="645" y="104" text-anchor="middle" font-size="12" font-weight="600" fill="#1c1917">攻击者视角</text>
+                <text x="645" y="124" text-anchor="middle" font-size="11" fill="#7d736c">得不到任何区分依据</text>
+                <text x="645" y="142" text-anchor="middle" font-size="11" fill="#7d736c">→ 账号枚举不可行</text>
+                <line x1="399" y1="176" x2="399" y2="216" stroke="#7d736c" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#se2g)"/>
+                <rect x="294" y="222" width="210" height="46" rx="8" fill="#fff" stroke="#e6e1dd" stroke-dasharray="5 4"/>
+                <text x="399" y="242" text-anchor="middle" font-size="11" font-weight="600" fill="#1c1917">服务端日志</text>
+                <text x="399" y="258" text-anchor="middle" font-size="11" fill="#7d736c">记录真实原因，仅供排障</text>
+              </svg>
+              <figcaption>图：失败响应同形。差异化文案、限流 429、异常耗时都会成为枚举依据；真实原因只进服务端日志。</figcaption>
+            </figure>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>限流返回 429</td>
+                  <td>对合法用户更可解释。</td>
+                  <td>否决作为默认。429 会暴露账号正处于锁定状态，便于账号枚举。本课要求与口令错误返回相同响应。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>三类失败响应是否同形？</td>
+                  <td>账号不存在、口令错误、被限流三类返回一致，不成为账号枚举的依据。</td>
+                  <td>
+                    <b>规约</b>：是否写明统一失败响应<br/><b>代码</b>：搜错误返回分支，看是否有差异化文案<br/><b>运行</b>：三种输入各试一次，对比状态码、响应体与耗时
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>角色权限和班级边界均由服务端校验。</li>
+              <li>上传校验扩展名、大小和内容；存储名由服务端生成。</li>
+            </ul>
+            <h3 class="unit-sub">建议一并写进 README 的行为</h3>
+            <ul>
+              <li>跨班详情与文件返回 404，响应与不存在的记录一致。</li>
+              <li>
+                <code>/health</code> 只表示进程存活，不要把数据库探活混进去。
+              </li>
+              <li>登录失败限流后的提示仍与口令错误一致，避免枚举账号。</li>
+              <li>数据库不可用时业务接口返回 503，不要把已登录用户报成会话失效。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u3">
+            <h2 class="unit-h">
+              <span class="unit-n">3</span><span class="unit-t">部署侧默认拒绝：探针与网络</span>
+            </h2>
+            <p class="unit-lead"><b>存活探针不查库、数据库不出内部网络，故障才不会互相放大。</b></p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>存活与就绪</h3>
+              <p>/health 表示进程还能响应。数据库探活属于就绪。混在同一个端点中，数据库抖动会被编排系统误判为容器故障并触发重启，放大故障。数据库不可用时业务接口应返回 503，不要把已登录用户判为 401。</p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>在 /health 中一并检查数据库</td>
+                  <td>编排层一次探活依赖。</td>
+                  <td>否决。存活与就绪探针分离；数据库抖动时不要整体重启容器。业务接口返回 503。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>/health 是否混入数据库探活？</td>
+                  <td>只做存活判定；数据库不可用由业务接口返回 503，不判为会话失效。</td>
+                  <td>
+                    <b>规约</b>：<code>design.md</code> D9 与 <code>specs/auth-upload/spec.md</code> R8（/health）<br/><b>代码</b>：看 health handler 是否查询数据库<br/><b>运行</b>：停掉 db，对比 /health 与 /api/materials 的返回
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>数据库只在 Compose 内部网络可达，不要映射宿主端口。</li>
+              <li>本地用 Docker Compose 构建与启动；当前单实例，多副本方案本迭代不做。</li>
+            </ul>
+          </section>
+          <p class="note">把否决理由用自己的话写进 design / 迭代说明；原文照录本表不算 ADR。</p>
+          <div class="think">
+            <h2>想一想：判断与取舍</h2>
+            <p><b>先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul>
+              <li>SECRET_KEY 或 SESSION_SECRET 入库会引入何种风险？规约有无显式禁止？配置外置如何落实？</li>
+              <li>/health 为何不要求认证？它与材料列表失败路径在设计意图上有何区别？</li>
+            </ul>
+          </div>
+          <div class="pager">
+            <a class="btn btn-ghost" href="architecture.html">← 系统怎么走</a><a class="btn btn-ghost" href="auth-schemes.html">认证方案对照 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

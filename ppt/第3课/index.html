@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="KgogovJvF6jiL8e8yMeSMp">
+  <head data-page-node-id="GAJSLeMoS4SxbxxKCc2X1K">
+    <meta charset="UTF-8" data-page-node-id="L39m3566iWy5Z1l2p0jb5U"/> <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="H2DG5wH33cBEqmPzQNUgtT"/>
+    <title>实现教程 · 第 3 课 · 认证授权与知识库入库</title>
+    <link rel="stylesheet" href="css/app.css" data-page-node-id="HIsSl3nx6Pj2Ratz6eMytE"/>
+  </head>
+  <body data-page-node-id="HLSI5bUuPMZOspdmNEDyKc">
+    <div class="app" data-page-node-id="QNhUPwPol2jF9PMv8fh31P">
+      <aside class="sidebar" id="sidebar" data-page-node-id="6Qzt1jjpDe1kWhvAfQeh8s">
+        <a class="brand" href="index.html" data-page-node-id="gboBHr1NWptoUs1PSDKfTb">CampusClaw<span data-page-node-id="1nC0AaChwj9DFi4LTboB21">第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航" data-page-node-id="zh308RY1j2dQt7PyHYR8Sh">
+          <p class="nav-label" data-page-node-id="OouLrAsL4wGvGjU1BFf592">本课</p>
+          <a href="index.html" class="active" data-page-node-id="oI4aq7U2psvZwoEod2uGMD">概览</a> <a href="pages/scope.html" data-page-node-id="j6hQC7gjdPRcIAQGEDA22v">要做成什么样</a> <a href="pages/architecture.html" data-page-node-id="3xQps8UNZIliwlzsJbTAHn">系统怎么走</a> <a href="pages/security.html" data-page-node-id="wFj5kyNtGQZqvzRlwtPEyE">安全与部署</a> <a href="pages/auth-schemes.html" data-page-node-id="lQKKVHbEkNNqlnzdIEJx00">认证方案对照</a>
+          <p class="nav-label" data-page-node-id="hN33SViM9yzRuQsV2Xlfu0">实现步骤</p>
+          <a href="pages/roadmap.html" data-page-node-id="yOGdERiaRKUDyA2xCCPFbr">路线图</a> <a href="pages/s1-skeleton.html" data-page-node-id="oBMW2nUf7INdzDGbFOvtA1">1 骨架与配置</a> <a href="pages/s2-data.html" data-page-node-id="I1ZOc8ltINCuYVznluZVTT">2 数据与种子</a> <a href="pages/s3-auth.html" data-page-node-id="9BsjCGvIP9vuiwnFY7DgIe">3 登录与会话</a> <a href="pages/s4-isolation.html" data-page-node-id="ssabo6wigoDQzW79juwh4v">4 班级隔离</a> <a href="pages/s5-upload.html" data-page-node-id="YXHmDi4TnputwjDPeyGThA">5 上传入库</a> <a href="pages/s6-frontend.html" data-page-node-id="rSq73ckwLRBuNT5h1AXZk0">6 前端页面</a> <a href="pages/s7-compose.html" data-page-node-id="6awZlUeWCsHDpvT3s7QapE">7 Compose</a> <a href="pages/s8-verify.html" data-page-node-id="jCm7moveb6D1IOypBzufDB">8 验收</a>
+          <p class="nav-label" data-page-node-id="DofEm2cHsCinkZ4DIRTXqs">核对</p>
+          <a href="pages/checklist.html" data-page-node-id="tnRgQVGaVGAGhKA0w45avd">核对总表</a>
+          <p class="nav-label" data-page-node-id="fCil2xLpu0uLhBCo7Epcqw">发布</p>
+          <a href="pages/design.html" data-page-node-id="hMabW4SYaL7b8xlba76rzT">设计决策</a> <a href="pages/apply.html" data-page-node-id="pEef7ckJZItb00MqBeJX5N">按规约实现</a> <a href="pages/ship.html" data-page-node-id="MpVLDN4dvF8A36FJhM3CTZ">提交清单</a> <a href="pages/nongoals.html" data-page-node-id="1SxFlCMhTj8rMMwNuBxB5Y">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main" data-page-node-id="Y0uGBpXcq7PlitPMs9Jc3Q">
+        <header class="topbar" data-page-node-id="WNEWwCysEoOVxRwOxIIqxa">
+          <button class="menu-btn" type="button" id="menuBtn" data-page-node-id="4npM7Xs4U2YkNIC5wQRGq7">菜单</button>
+          <div class="crumb" data-page-node-id="BpC2H0aGvBHiOfFqeChLtO">
+            概览
+          </div>
+          <div class="badge" data-page-node-id="F9ckdvuilti5zgbzB10TCA">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content" data-page-node-id="ClhBbAanxhZlAP0mzfGz0A">
+          <h1 data-page-node-id="PD7I9sorxVm3qeXEQxtLlY">实现教程</h1>
+          <p class="lead" data-page-node-id="UsHjbzGadihUlN04KBIQC6">CampusClaw 是面向中小学的教研智能体。本迭代先搭建它的底座：登录与角色权限、班级数据边界、教研材料上传与知识库入库。本课交付第 2 课那个 change 的实施、校验与归档；每一页先读知识点，再看动手步骤。</p>
+          <h2 data-page-node-id="wCvk4sccXAwXuY4REiIl7Q">本课在项目中的位置</h2>
+          <p data-page-node-id="SIJ9A1nnkYSzjDCk78OgZa">完整形态覆盖学情分析、备课、命题、课堂与教研协同。本课只交付<strong data-page-node-id="ZRF2akdORzREG574kHQliJ">迭代 1：教研材料与知识库底座</strong>，也就是后续智能能力的地基。因此判定标准不是界面是否好看，而是：能登录、能隔离、能上传入库、第三方能按 README 复现。</p>
+          <nav class="steps" data-page-node-id="L4EylV2juWqHoBzTT16ADr">
+            <p class="steps-h" data-page-node-id="Ire7ewXFGqolNf3gjn4Sq5">本页步骤</p>
+            <a href="#u1" data-page-node-id="JrsjC4grSWWb4Rjr7Enj4b"><span class="steps-n" data-page-node-id="dODyAAbwRXc9qOlAwYW5kF">1</span><span class="steps-t" data-page-node-id="c03tOyztIiahcINJAsxbXV">术语约定：Harness</span></a><a href="#u2" data-page-node-id="ac3kkEppzEXcsWSId6hVxt"><span class="steps-n" data-page-node-id="EuXrjOfXqlFpFVNdOkYZxs">2</span><span class="steps-t" data-page-node-id="2xMKLGhnU3osbNg8B7fnwp">怎么用这份讲义</span></a><a href="#u3" data-page-node-id="Iz8yOSXRBp51RzQFmQlGsA"><span class="steps-n" data-page-node-id="Ofz14syAnAGY5YREZmHTpG">3</span><span class="steps-t" data-page-node-id="wapfmR9m2jC5E7xXAgeiuw">本课在 OpenSpec 中的位置</span></a><a href="#u4" data-page-node-id="hOrghoxG3cpvHyAvNlsIms"><span class="steps-n" data-page-node-id="j0PH7cR27CgGiYpI3osG16">4</span><span class="steps-t" data-page-node-id="oIja2zfMxzk51nc1Lwcdgc">三个必须记住的判断</span></a><a href="#u5" data-page-node-id="wZj1u5bKB9gYVA7RdhPheA"><span class="steps-n" data-page-node-id="tGbl61yUbpMfTUHwkHZtay">5</span><span class="steps-t" data-page-node-id="oTgJEAUTUcZ0G9DBVyN8La">交付纪律：三条被否决的做法</span></a>
+          </nav>
+          <section class="unit" id="u1" data-page-node-id="lUmBC5ePfVEPVPNKQhMBmR">
+            <h2 class="unit-h" data-page-node-id="l2R8WOYq8IHXT9IMD0HK9H">
+              <span class="unit-n" data-page-node-id="9d22Oq4EUOzEeAjwPg7vOS">1</span><span class="unit-t" data-page-node-id="CT6AknQH4bQB4XECaArFWT">术语约定：Harness</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="rbhh8ULqhbioG1KY3zdYeV">本课从头到尾用它指代“按规约改代码的那一方”。先给出准确释义，后续各页直接使用。</p>
+            <h3 class="unit-sub" data-page-node-id="WTl5msim5S989ZTxPplZiU">知识点</h3>
+            <article class="kp-card" data-page-node-id="u5FzSjX1ECTpbZHmrWO48d">
+              <h3 data-page-node-id="vcCqXscgDV1Pe8TAq5Qc3Y">Harness：驱动并约束模型的那层系统</h3>
+              <p data-page-node-id="fisi96uX5Eg4lZ2PgQ5moy">
+                <b data-page-node-id="c37Me253HkQ95mHdZf4ZM7">Harness</b> 原义“挽具”——套在马上、把牵引力导向农具的整套革带。AI 编程沿用了这个比喻：<b data-page-node-id="V44XNAAxOYgJEuWr1ZypHv">Harness 指使模型能够作为智能体行动的那层系统</b>——把输入交给模型、编排工具调用、把运行结果回传，直到任务结束。业界常见概括：“除了模型，其余都是 harness。”
+              </p>
+              <p data-page-node-id="2UXOnpd6QmhCAtKG11J3xP">所以 <b data-page-node-id="DB7HPSkEcS8zfQBLZ0Sd4d">Harness 不包含模型本身</b>——模型是引擎，harness 是套在外面的那层：给模型的<b data-page-node-id="JVpBObUKmysHxicNd9SwuV">指令与约束</b>（系统提示、<code data-page-node-id="zp1r1PqwZ1XOXcB2Fsx4Ik">AGENTS.md</code>、change 四件套）、可调用的<b data-page-node-id="xx1Y8FIdDdGPhzd2syNYiI">工具</b>（读写文件、执行命令）、以及<b data-page-node-id="Jx6cUwISZaXTME1IlGICvL">循环与边界</b>（权限限制、结果回传）。Cursor、Codex、Claude Code 都是 harness；同一个模型配不同 harness，行为差异主要来自 harness。</p>
+              <p data-page-node-id="ke8i2wyMM1t3mnoYDiBjN3">写规约能约束生成，机制就在这里：<code data-page-node-id="Iswl0EYDKJ1zDX5RcUcLV6">AGENTS.md</code> 与 change 四件套<b data-page-node-id="HuU7wulFKBIoPQlr1L8Ug6">本身就是 harness 的一部分</b>，不是给模型的“参考意见”。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="cUOe0YW0mJFl76RJvcAWHr">哪些交给它，哪些必须由你负责</h3>
+            <table data-page-node-id="Nytd5WDPkgygL5F171HN71">
+              <thead data-page-node-id="DpuKOvyITVQFJ3sdMJIWM8">
+                <tr data-page-node-id="WkEt6mFf2daSI79eHLqxMk">
+                  <th data-page-node-id="xY1ogJNSi7DvAYqOuVsfh3">环节</th>
+                  <th data-page-node-id="KM5n2PZiXfKcq9cjPNpBv2">Harness 负责</th>
+                  <th data-page-node-id="QGUZmq4hVuPfgmqSYSYLh1">必须由你负责</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="mbsXt2blJrz2IPDtqBDWEQ">
+                <tr data-page-node-id="ED7TT4yPxwbwIdt0zK2qkb">
+                  <td data-page-node-id="exUqH3z5dCkWJnTj36frTw">范围</td>
+                  <td data-page-node-id="KiB1AMyn8FgYpDSed85fIn">在给定规约内把功能实现出来</td>
+                  <td data-page-node-id="VMH4TisNGlECfWPOJ3oQVI">范围由 <code data-page-node-id="m3P997MOA8MeCQHo9SEq0U">proposal.md</code> 与 Non-goals 决定，不随其超出规约的自发改动而扩张</td>
+                </tr>
+                <tr data-page-node-id="zPrVqBQ5TaSognrHWsadWU">
+                  <td data-page-node-id="kKEnnIGYv2WDMqQMzeXirW">依据</td>
+                  <td data-page-node-id="LqsG7rSfzRFU9uYvq5Inbq">先读 <code data-page-node-id="y342kp5XuiCwgI1duInNQK">design.md</code> 与 delta spec，再动手改代码</td>
+                  <td data-page-node-id="DN5RYdcNwuxR5s8Mt5Dlcs">规约含糊或缺失时先改规约，而不是由它自行裁量</td>
+                </tr>
+                <tr data-page-node-id="TbMgVlsyVGJZtV3qGa662z">
+                  <td data-page-node-id="lVZmApR1Mzs3rzKwHrN892">判定</td>
+                  <td data-page-node-id="QkXpswHnV0swEMsjICx6mW">执行命令，给出运行输出</td>
+                  <td data-page-node-id="XSFCJjqIVEozyPE8AfqtAs">“是否合格”由 Scenario 与运行结果判定，不由它自己下的结论判定</td>
+                </tr>
+                <tr data-page-node-id="W7SiewLGDC0PriZvLa7kLZ">
+                  <td data-page-node-id="tYYdWDUUu4RyyRLClB2rsc">责任</td>
+                  <td data-page-node-id="eb5IZfqcuI6ZmduckJCxgV">按你的驳回理由重做</td>
+                  <td data-page-node-id="pbm01pOKBpGicNU9jh0oI9"><b data-page-node-id="SxacVtII2HtQ3LR5M6Dtt6">提交人对产出负责，审查责任不因使用工具而转移</b></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="note" data-page-node-id="i5vRYw675AxWD15HA3VTlS">
+              <b data-page-node-id="wdegGZVHUQ6WWF4Kby3Kkw">记住这一条：</b>把规约交给 Harness，是为了让它按字面实现。若它额外生成了规约中未声明的功能，问题通常出在规约缺了“不做”的条目——先补规约，再删代码。
+            </div>
+          </section>
+          <section class="unit" id="u2" data-page-node-id="9n6SXNXMLU6iyYxkjt2QDL">
+            <h2 class="unit-h" data-page-node-id="2WpVjHfOMzEiBkGnkjvQTj">
+              <span class="unit-n" data-page-node-id="a5fzHpCGlbG6MjYHTsZs0H">2</span><span class="unit-t" data-page-node-id="R9ET2Z0unw6chJRQsJ5AB4">怎么用这份讲义</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="1TaHdsIYU7mIGbBsRBigKC">翻到任意一页，都按下面同一节奏展开。</p>
+            <h3 class="unit-sub" data-page-node-id="Zpwt23aMXcc5TL5GqXeuV7">怎么用这份讲义</h3>
+            <div class="flow" data-page-node-id="9HwDkl4SJad28eNCMj3IBZ">
+              <div class="flow-step" data-page-node-id="hZbDOUhVMaiPCWPWWomdf2">
+                <b data-page-node-id="9AXVk1uUzLiZiuzRnMTN24">1 读知识点</b><span data-page-node-id="kd87cm4UEtZTJ35et3dpje">这一部分涉及的概念与原理</span>
+              </div>
+              <div class="flow-step" data-page-node-id="ZkHNSFp1EkWUhDcsV6dHYc">
+                <b data-page-node-id="Ef1b8XMw6S3NLkp0uUOQWh">2 比方案</b><span data-page-node-id="bZ3Q7ZykqxYuaWob8or2HS">其他可行方案与选择依据</span>
+              </div>
+              <div class="flow-step" data-page-node-id="CseOvrA3PFeI7EIEEe2FHm">
+                <b data-page-node-id="Cb7QXyK49JoBbOzS7SPPKK">3 核清单</b><span data-page-node-id="FSNIMWfjcROkBaxX9vRkcA">核对自己规约与代码到底用了哪个方案</span>
+              </div>
+              <div class="flow-step" data-page-node-id="MUWzW4INwf94drDKXcK4TP">
+                <b data-page-node-id="zp1UGzJCPhPG2MoA3KcAOa">4 动手做</b><span data-page-node-id="Z9Zd08gjYTvpo6fUrCFueh">按步骤实现，并留下可复核的证据</span>
+              </div>
+              <div class="flow-step" data-page-node-id="5O8EKIXhqjVdEz6d18PB6R">
+                <b data-page-node-id="Fuhp0m1p5biHuBdlSYji7T">5 想一想</b><span data-page-node-id="nRcCu9dRK0QWItjXytL1uh">换方案会怎样：判断与取舍</span>
+              </div>
+            </div>
+            <div class="note" data-page-node-id="tBKYolBWMcg4YlCFJNuPHA">
+              核对清单不是复习题，须逐条落实：在规约里找到对应条款，在 Harness 产出的代码里搜到对应实现，再运行验证一次。找不到或不一致，就属于规约缺失或实现越界，先修正再继续。八步的决策点汇总在 <a href="pages/checklist.html" data-page-node-id="H2YY7KhC1HZ16jX2B2juTY">实现方案核对总表</a>，可打印后逐项勾选。
+            </div>
+          </section>
+          <section class="unit" id="u3" data-page-node-id="bxBLsBhcN8kpy3yB0BTSQA">
+            <h2 class="unit-h" data-page-node-id="9GVxKaJbQEtFtlkaapQOGi">
+              <span class="unit-n" data-page-node-id="a1IlyP0kWMFSVahT13CWTv">3</span><span class="unit-t" data-page-node-id="SgLPV4xbIyDuj3inMrdpk1">本课在 OpenSpec 中的位置</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="5UofFWZJCuVdEcQ4lfBSj3"><b data-page-node-id="KdEMhJsSkTskCI1LlPG0DU">第 2 课把需求写成了 change 的四件套；本课是同一个变更的后三步：实施、校验、归档。</b></p>
+            <h3 class="unit-sub" data-page-node-id="iusNgwyf9w0vcpTC4T08mz">知识点</h3>
+            <article class="kp-card" data-page-node-id="4mq3gtpF6ARNEbnXRbzRSA">
+              <h3 data-page-node-id="mjLrCvQo3t9pcWTbpQXwgm">一次变更 = 一个 change</h3>
+              <p data-page-node-id="c13ARk7oGmdEdjxqIUQcOu">OpenSpec 把规约做成仓库里的一等工程制品：<code data-page-node-id="3rVuybyKNx9wAOPDbPEP1o">openspec/changes/&lt;change&gt;/</code> 下的四份 Markdown 就是这次变更的全部依据。流程围绕这四份文件推进，不围绕对话。</p>
+              <p data-page-node-id="PRxoKaEyfNuic2bwFgFO4g">一次变更走五步：<b data-page-node-id="Ka26t7e6KsWr80Up8XuHi0">提变更</b>（Propose）→ <b data-page-node-id="pe8QlAJT2d8PhnWH5iCCx5">评审</b>（Review）→ <b data-page-node-id="6QQTuCF1HO3BMwpmXvq1P2">实施</b>（Apply）→ <b data-page-node-id="GEZvNwKSgSAVlG3vsamBEQ">校验</b>（Verify）→ <b data-page-node-id="HM5T9nPXwvfd2jASidXkjV">归档</b>（Archive）。第 2 课做完前两步，本课做完后三步。</p>
+              <p data-page-node-id="zulVVW7biIfP9PLbpCmRux">四件套各管一段：<code data-page-node-id="WYfXLDgxDgne4K5dwW9HwT">proposal.md</code> 说为什么做、明确不做什么；<code data-page-node-id="3z1m6b37Yc6bPxEnhxyD8N">design.md</code> 说怎么做；<code data-page-node-id="lKeDE0K3IMfwuPJe4X4LKw">specs/&lt;capability&gt;/spec.md</code> 用 Requirement 与 Scenario 说「做到什么算合格」；<code data-page-node-id="UTRFaScQ2gPya1gQ9CXBU9">tasks.md</code> 把实现拆成一条条带 <code data-page-node-id="QrqtTiWyTvOFW5pkZgqwUy">verify</code> 的待办。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="VevvYAlV48M3X8taCQdFAO">本课在五步中的位置</h3>
+            <table data-page-node-id="6sZJoYWDk3HWHp8nvzewPR">
+              <thead data-page-node-id="UiOwegWQ86Bh9FbvswbCnu">
+                <tr data-page-node-id="37G5AM8IhmhTGEKMuDVIME">
+                  <th data-page-node-id="cBE6z2AUS1J1gzTuvQgNsl">步骤</th>
+                  <th data-page-node-id="3jTREjAXEPYfrS49RpHxJw">做什么</th>
+                  <th data-page-node-id="LnLHJUun90hZSMyPlEEHyk">产物</th>
+                  <th data-page-node-id="gFXQgcD3VHdCq9SEsnB69b">本课</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="DQnaHM0AlcBzWnwWd9Je70">
+                <tr data-page-node-id="jmbQxHnZDDcLPsYOZWNGmd">
+                  <td data-page-node-id="BtMMGyJ98CNJ0h9zBC7qsh">Propose 提变更</td>
+                  <td data-page-node-id="kAhBgpPxQ2JwWMksE5UcbA">把需求写进 change，不允许只停留在对话里</td>
+                  <td data-page-node-id="3yxgnAzohXVddQBPmeHDi9">四件套初稿</td>
+                  <td data-page-node-id="AMYcWhCGKK8UMUd12U3AzZ">第 2 课</td>
+                </tr>
+                <tr data-page-node-id="YfTNwCQjAGqdoi7dSCG7m0">
+                  <td data-page-node-id="5eiSTpvtu7MPpZg1V0K4cE">Review 评审</td>
+                  <td data-page-node-id="1Q7JBvqVI6y2HD7Uf0Df6t">交叉阅读：范围对不对、每条要求能否判定</td>
+                  <td data-page-node-id="wWXUBFVE1JVYIZU68wEBEl">修订后的四件套</td>
+                  <td data-page-node-id="88xkWAKtvBTqabYFwVfBGi">第 2 课</td>
+                </tr>
+                <tr data-page-node-id="yWz7uqH7rpc1CaXAXdZEVq">
+                  <td data-page-node-id="ISQ1NUqyy2Ev22lL3C6is9">Apply 实施</td>
+                  <td data-page-node-id="eOSy60aw2WNHHteW4talIe">按 <code data-page-node-id="iV5fXda62kN35dsxprnp2s">tasks.md</code> 逐项实现，完成一项勾一项</td>
+                  <td data-page-node-id="TvaLzVKtPbokGOa0HgwER6">代码 + 勾选后的 <code data-page-node-id="WbxFUM2NfkVlrT0o8P7Raw">tasks.md</code></td>
+                  <td data-page-node-id="CUe10CEXCMNB5p74nKyA9x">
+                    <b data-page-node-id="whfTcR3GVRpbpE6FO1xB2u">本课做</b>
+                  </td>
+                </tr>
+                <tr data-page-node-id="Fd7BznyEw7ZgN9R6DFuUYf">
+                  <td data-page-node-id="3a0Ff07iHx61XJzkZ1XmYX">Verify 校验</td>
+                  <td data-page-node-id="G0xxj0e9TSbyA0XEMQxyCa">结构校验 + Scenario 逐条判定</td>
+                  <td data-page-node-id="jeX1qbncFVulI70HlLyLBB">
+                    <code data-page-node-id="M4Jhv2Vgsvy5BeNrYIs8se">validate</code> 通过、验收证据
+                  </td>
+                  <td data-page-node-id="DTX78ArXRrDheQtSSerbHd">
+                    <b data-page-node-id="q2XEWcemT8jEfee6jhg3A8">本课做</b>
+                  </td>
+                </tr>
+                <tr data-page-node-id="WDchH6L0MbaPC8x8jCIqou">
+                  <td data-page-node-id="v77oM0v5kBMEiUuzD2dW4S">Archive 归档</td>
+                  <td data-page-node-id="VupK60xOklET2kZaWNEmQS">delta 合并进主力规约，change 移入归档目录</td>
+                  <td data-page-node-id="3KScxW9d5wfBZIAB3juRIP">
+                    <code data-page-node-id="PpWOIVRybIElorGFnEXIpD">openspec/specs/</code> 更新
+                  </td>
+                  <td data-page-node-id="tgg9RqpLJEA0UVvlG1jk5u">
+                    <b data-page-node-id="oIdYyQ0xvTwaSxgWRAEbES">本课做</b>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="note" data-page-node-id="I1Cd0g9HX2VegSuzw0jCJD">
+              <b data-page-node-id="DUlEwRFRmMftKXKOYB7VP7">本课的边界：只动 change 目录。</b><code data-page-node-id="YN1UGIleH5Q6Sxmn9mGsFO">openspec/specs/</code> <b data-page-node-id="dxv3TiL3GsUcYgo2GfsJZW">是长期事实来源（source of truth），只由归档更新</b>。Apply 期间发现规约要改，改的是 change 里的 delta（<code data-page-node-id="RCvO98YZHpKtggi7n0H6H7">specs/&lt;capability&gt;/spec.md</code>），不是主力规约——一旦回写主力规约，delta 就失去比对基线，归档时也就无法判断这次究竟改了什么。
+            </div>
+            <h3 class="unit-sub" data-page-node-id="SqEVwsey41uxhUmCCWtlpQ">本步要核对</h3>
+            <table class="check-table" data-page-node-id="MwAwFXgIPUacHvUswhIjzU">
+              <thead data-page-node-id="tiQKkV6ZadKY7EO1Ljo4SU">
+                <tr data-page-node-id="8KfDBH2DgqDAFa613Qhhpx">
+                  <th data-page-node-id="Se1uYnCCRK15cYJAWLWNdt">核对项</th>
+                  <th data-page-node-id="Kt5AvcXplIS2f1ezvDTvNO">本迭代应采用</th>
+                  <th data-page-node-id="LPpDCOQidklQDBwaM85Bpn">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="DsMpicQ6qAvHbNBdYx5xfr">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="FzsfnoNK0VbcqzE5ZPgBJ6">
+                <tr data-page-node-id="uUfm6yp7chZgoLf8WwM5Ly">
+                  <td data-page-node-id="OlBGAIzx7Fzl7QEVHDEz2Q">本人 change 目录是否四件套齐全？</td>
+                  <td data-page-node-id="QBCVsizWJVC5QVwmKWBEoK">齐全：<code data-page-node-id="qXGgkb6W8COSz4NKEf3GBF">proposal.md</code>、<code data-page-node-id="hURZdwXQosDFSFhQiF4k4a">design.md</code>、<code data-page-node-id="zNFwvap5NVV5grPBJ7M8Bx">tasks.md</code>、<code data-page-node-id="VRYvec4O61dIJMbS1iqc5S">specs/&lt;capability&gt;/spec.md</code>。</td>
+                  <td data-page-node-id="MTJzp1Av9yyHF0YB5e2Aso">
+                    <b data-page-node-id="NSTEGHH2Al23n9YfF4hdxC">规约</b>：<code>openspec/changes/&lt;change&gt;/</code> 下四文件齐全（演示仓 change 名 <code>add-auth-rbac-class-knowledge</code>：<code>proposal.md</code>、<code>design.md</code>、<code>tasks.md</code>、<code>specs/auth-upload/spec.md</code>）<br data-page-node-id="qmJrJN7LEEbRenOtPWvWjV"/><b data-page-node-id="xqCPFi37JtSohvAi5eiHld">代码</b>：仓库里 change 目录的实际文件<br data-page-node-id="GZUDPDD0HAtQd90OeZ60Fp"/><b data-page-node-id="nvGlq62JInZmlGhByB1Ko8">运行</b>：<code data-page-node-id="CXp7XqvhRVXjOEU0leILjl">openspec list</code> 能看到本 change
+                  </td>
+                  <td class="tick" data-page-node-id="szRjBQsuHmm9StGAlcQTJl">
+                    <span class="cb" data-page-node-id="nduP7YCzrbGfXS7pjvVsNE"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="5xFpz9ADsZD0VYJB9a3ww2">
+                  <td data-page-node-id="Z4ByptgIadr48MMrkFYLMr">本能力是否还没出现在主力规约里？</td>
+                  <td data-page-node-id="t4t61WEFznE9ajarLy2WuD">还没出现。<code data-page-node-id="XUAUGWRunDHXGVozWlGrL7">openspec/specs/</code> 只由归档更新；若已出现，说明有人提前回写了主规约。</td>
+                  <td data-page-node-id="oHycGH4hNuJydH8FcDbhSp">
+                    <b data-page-node-id="JyfGqoIpc8Nyzv9vKFLcTp">规约</b>：<code>proposal.md</code> 的 Modified Capabilities 与 <code>openspec/specs/</code> 归档约定<br data-page-node-id="sNnkXVV01ofrrd3UTY7pc8"/><b data-page-node-id="fGQWYxEfVjgpiEEc5feYVu">代码</b>：看 <code data-page-node-id="jRUsHAJI3Bz4ENpQo712fc">openspec/specs/</code> 下的目录<br data-page-node-id="CcXmiFmy5aoOR8uAmtXW9w"/><b data-page-node-id="0piS74NFDK5HCHsf4SETiu">运行</b>：<code data-page-node-id="PpzkjxGzXwyZhDLaWy80E7">openspec list --specs</code>，本能力应不在其中
+                  </td>
+                  <td class="tick" data-page-node-id="CGu6s5PgRbXLjEkAwWyfXz">
+                    <span class="cb" data-page-node-id="b2BI5XbeGaYFbZPrh2PUPI"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="CcD8z9BmVJahcAKejBYS4T">
+                  <td data-page-node-id="RLD1vmPcDqetQjdClw3ZVp">
+                    <code data-page-node-id="QGUyBqSrHLRFDwoESYPO9o">tasks.md</code> 的待办是否仍全部未勾选？
+                  </td>
+                  <td data-page-node-id="vIRX5crhxkY2ImBe2cpGDh">第 2 课交付时全部是 <code data-page-node-id="tx6dr5hUubgwQWl9769Zm1">[ ]</code>；勾选从本课第一项 task 才开始。</td>
+                  <td data-page-node-id="HjtQk0qmgVSS3BAeV8vjSC">
+                    <b data-page-node-id="GS4OOuEQxXZ9iJpahJRacZ">规约</b>：<code>openspec/changes/&lt;change&gt;/tasks.md</code> 开工前全部为 <code>[ ]</code><br data-page-node-id="9VyxlZwqgl5NavZ6XoWtmj"/><b data-page-node-id="1f0DiXajgADTYFr8ReEVp5">代码</b>：打开 <code data-page-node-id="50b6EBM40MZJjyV4wWjRi5">tasks.md</code> 看方括号<br data-page-node-id="o2IEX5LAaapQ7jKiblw64W"/><b data-page-node-id="6MIiv62819KzWQT40YWtqx">运行</b>：统计已勾选项数量，开工前应为 0
+                  </td>
+                  <td class="tick" data-page-node-id="KJAOGEnVtmp9e3kfzm7u06">
+                    <span class="cb" data-page-node-id="rNfiF7Yb1e121wnEu9Vvsw"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="CzHkO7TdMl4jkhyffxq60h">动手要做</h3>
+            <ul data-page-node-id="3EKuoCUy2LHN5y4UMQRGaf">
+              <li data-page-node-id="kJPq2vROo40OACUQ71kjCk">在学期仓根执行 <code data-page-node-id="ku5KBxGAcE50i6s7ICEjbP">openspec list</code>，确认本 change 在活动列表中。</li>
+              <li data-page-node-id="Ce9frLiuFxJV3lFBtTZt8I">执行 <code data-page-node-id="9mJW3fcmeLhqWhFiKOZz1L">openspec list --specs</code>，确认主力规约里还没有本能力——它要等归档之后才出现。</li>
+              <li data-page-node-id="6nRu5MEjG83Pe83zep58uU">打开 <code data-page-node-id="tEsytMXP0HRRSWwJ4HCdTn">openspec/changes/&lt;change&gt;/</code>，通读四件套：<code>proposal.md</code>（范围与 Non-goals）、<code>design.md</code>（决策与接口）、<code>specs/auth-upload/spec.md</code>（Requirement / Scenario）、<code>tasks.md</code>（顺序与 verify）。讲师规约 / Apply 起点：<code>AI-DevOps/project-src/week03/</code>；Apply 完成可运行对照：<code>AI-DevOps/project-src/week03-applied/</code>。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u4" data-page-node-id="kygyHAxUWtYnGPXozx0cYu">
+            <h2 class="unit-h" data-page-node-id="sMvGj9FajsA9pDRfmZoCE4">
+              <span class="unit-n" data-page-node-id="qPdzQzbnYh04yhblCTwBoN">4</span><span class="unit-t" data-page-node-id="Q104tGuMk6mYCFwpWXgHQh">三个必须记住的判断</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="BK2tSuf744iQ5sE7h9suMi">全课的知识基础。后面每一步的核对，都在验证这三条是否落进了规约与代码。</p>
+            <h3 class="unit-sub" data-page-node-id="wzQZfQV7GIBrp6BSdQ2ho5">知识点</h3>
+            <article class="kp-card" data-page-node-id="sRwblmVMuAeRFXJDvBdScy">
+              <h3 data-page-node-id="20sFAIxTH3m6AtnIUUFI4j">规约是契约，代码是派生物</h3>
+              <p data-page-node-id="HBzR04zHIoIfLBpHAhEMIa">vibe coding（对话式即兴生成）以对话为准，SDD（Spec-Driven Development，规约驱动开发）以规约为准。本课的驳回、验收与质量门禁（gate）都来自这个区别。<b data-page-node-id="CdEoTSErIHIcT7wn5ZdGSS">Harness（AI 编码代理）生成的代码若偏离规约，应引用 Scenario（场景）驳回，而不是通过追加对话不断扩大范围。</b></p>
+            </article>
+            <article class="kp-card" data-page-node-id="dUHxWDSr6j1ZdTbuW3xH3u">
+              <h3 data-page-node-id="3vHasqCq6uvvx2oPvwZxxw">认证、授权、隔离是三件不同的事</h3>
+              <p data-page-node-id="HHlUNEqCN0TowxKpGWpGcF"><b data-page-node-id="olAR1YY2kXSFBN4SIfH7up">认证回答你是谁；授权回答你能做什么；隔离回答你能看见哪一块数据。</b>缺会话属性（用户、角色、班级）时，后面的需求无法判定。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="l6GoGSohRP4hAETowN56bn">
+              <h3 data-page-node-id="u2GZQtoEBmDrS6ON3dTMZJ">访问控制必须在服务端强制执行</h3>
+              <p data-page-node-id="BHDSbClEGNBDFFoWZZg414">Saltzer（杰罗姆·萨尔策）与 Schroeder（迈克尔·施罗德）在 1975 年论文《计算机系统中的信息保护》（The Protection of Information in Computer Systems）中提出的安全设计原则：默认拒绝（Fail-Safe Defaults）、最小权限（Least Privilege）、每次请求完整校验（Complete Mediation）。<b data-page-node-id="aJB8CkPgVM8Dr83d0kCVBT">前端隐藏按钮只降低可发现性，不构成访问控制。</b>对应威胁：垂直越权（BFLA，Broken Function Level Authorization，学生调用教师专属接口）与水平越权（BOLA / IDOR，Broken Object Level Authorization / Insecure Direct Object Reference，同角色访问其他班级数据）。</p>
+            </article>
+          </section>
+          <section class="unit" id="u5" data-page-node-id="AUEUH8ghdeKgQjKLXhIxAU">
+            <h2 class="unit-h" data-page-node-id="VY3BvwsiiiesycVcteDWoE">
+              <span class="unit-n" data-page-node-id="d46dwzyvUFLycvWBJO1PEb">5</span><span class="unit-t" data-page-node-id="VTSU6RKi4mgvDClgEDQ4nM">交付纪律：三条被否决的做法</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="xnesHKlIAADboMbYLAtRHM">这三种做法都会让“实现是否可判定”失去依据，因此本课明确否决。</p>
+            <h3 class="unit-sub" data-page-node-id="WEXDxSEPthJWeoFWEGFOET">其他可行方案与选择依据</h3>
+            <table data-page-node-id="ClGJZ71aVBf7NUl6KiIAUU">
+              <thead data-page-node-id="xNtkZarMICu266rLzxL7qx">
+                <tr data-page-node-id="DEXvk4erUxW9mFtxAZ8SkT">
+                  <th data-page-node-id="ALfmSHeNuNGoSBUE0c4voT">方案</th>
+                  <th data-page-node-id="XqRleXvFFybD4XpiQS3NqR">要点</th>
+                  <th data-page-node-id="UYEAgUhmT5fLYXZn2apt98">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="aEbtGW3PpvlzdtIxCOnUW0">
+                <tr data-page-node-id="6E2UBxc3oEbFkbgKB2EL83">
+                  <td data-page-node-id="CcsKlKpFxDNF8YAIiogh2U">vibe coding 一次生成</td>
+                  <td data-page-node-id="iaHLA63S5CU9VlZrGnRP80">对话即需求，速度快，但规约与验收标准难以保持一致。</td>
+                  <td data-page-node-id="vCjaQS9CbIMDITBFYXLc9T">否决。本课用 SDD：<b data-page-node-id="IPC3EB58vcFRZXxGpSC3Wf">规约是契约，代码是派生物。</b></td>
+                </tr>
+                <tr data-page-node-id="rMKrmF5kF1qq5O29lFn6ev">
+                  <td data-page-node-id="SLkIPIbYxRSwgMgfxLrExK">只写规约不发布</td>
+                  <td data-page-node-id="uUO7v0c6FTC0UuwcRLGH2w">设计完整但第三方无法启动。</td>
+                  <td data-page-node-id="7Mlv6JFAtg51ggEBatE4An">否决。本课要用 Compose 交付迭代 1 的成果。</td>
+                </tr>
+                <tr data-page-node-id="FtreyjQbHvBWOAlL2IhENv">
+                  <td data-page-node-id="bDil548SpFt3PZ1GUKnAeP">分组共用仓库</td>
+                  <td data-page-node-id="8UBKW0GA7E39LzubAzpenC">协作快，责任不清。</td>
+                  <td data-page-node-id="BiBUV9LP7HSWJh2ZqiaPRs">否决。个人独立提交，互验用同伴交叉验证。</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <p class="note" data-page-node-id="wzqigwriuakezycIjh1fBj">把否决理由用自己的话写进 design / 迭代说明。原文照录本表不算 ADR（Architecture Decision Record，架构决策记录）。</p>
+          <h2 data-page-node-id="Yzr1eaATT4gEdxddJ3tcEY">本课要交付什么</h2>
+          <p data-page-node-id="LB4TzVRzylezpBOHT7AmTk">用 Docker Compose 在本机启动一个可登录、可隔离、可上传入库的 CampusClaw 基础版本。这一版只做教研材料与知识库底座，智能备课、智能命题、学情诊断等能力留待后续迭代。验收以本人学期仓库中的 OpenSpec 规约为准；<b data-page-node-id="MRLbaHKmGze9xNMaINLzMt">技术栈若与第 2 课 design 不一致，先改规约再实现。</b></p>
+          <div class="grid" data-page-node-id="t9kHX66nEJ9JHPcFwfsJ6E">
+            <a class="tile" href="pages/scope.html" data-page-node-id="JhLK4Pawxb7pUc2ICZ4rNt"><strong data-page-node-id="msG4KUJjsKcHowoxpY2M0C">要做成什么样</strong><span data-page-node-id="z858BpSGh45Pn0rXjlPOrA">登录权限、隔离、材料与页面体验</span></a> <a class="tile" href="pages/architecture.html" data-page-node-id="136nprIcIMvFAzmeLZPb0O"><strong data-page-node-id="EbBlB82BBW1rhcDURFaTJ6">系统怎么走</strong><span data-page-node-id="vAvnvthPLCYYich6N6Kawz">浏览器 → Nginx → Go → MySQL</span></a> <a class="tile" href="pages/security.html" data-page-node-id="WlljELHk54ifjdSBsnBPU6"><strong data-page-node-id="23DSmZiy709GWNO6XKe4jd">安全与部署</strong><span data-page-node-id="sR4cwpxoSDoAQ3UhFcJ0O8">哈希、Cookie、环境变量、Compose</span></a> <a class="tile" href="pages/auth-schemes.html" data-page-node-id="THDqDcAbdYUHjjyUzYikrl"><strong data-page-node-id="CJxWNvCMV4pyXyX4ybNTk2">认证方案对照</strong><span data-page-node-id="MkWTfs88s5Pd3SmDtChWoo">会话、JWT、Refresh、OAuth 的取舍</span></a> <a class="tile" href="pages/roadmap.html" data-page-node-id="vC4X7d9lyaAsHzZfLppTdt"><strong data-page-node-id="5HAy79XAqmHjLWTnx1Lb2z">实现路线图</strong><span data-page-node-id="9vssjmlBaGCCY3QsnJTcwk">八步，一步一轮，不要一次性生成全站</span></a> <a class="tile" href="pages/checklist.html" data-page-node-id="WThOeiMfFufR4FKkTvdi8U"><strong data-page-node-id="JcDDgUz3CboF5y0Leev4Yp">实现方案核对总表</strong><span data-page-node-id="RRNdnUKSvqkAp1DFWCFSS2">八步决策点汇总，可打印后逐项勾选</span></a>
+          </div>
+          <div class="note" data-page-node-id="kU8Sl0Brc0PdP7dcLLHP60">
+            请独立完成、独立提交。本教程按当前需求描述编写，不是作业提交系统，也不提供可整体复制仓库的参考实现。
+          </div>
+          <div class="think" data-page-node-id="jD34ug5P4vOulSXtgsTmk3">
+            <h2 data-page-node-id="jN22roiKJdlBpyqjy6YgFx">想一想：判断与取舍</h2>
+            <p data-page-node-id="zpeM1xdruZmW2dunw2ShTC"><b data-page-node-id="V9tIeVfFmybAUgZ0YzTGhM">先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul data-page-node-id="MyN6JyOOKUDD78IerKtq4h">
+              <li data-page-node-id="ZDPuIaXFu0K5AycC4skiyK">本人规约里，未登录访问受保护接口时，是否写明响应不得含材料标题或正文？只写跳转登录页够不够？</li>
+              <li data-page-node-id="VCSLBT12HTWP1d2crLY7LX">本课只做迭代 1。本人规约的 Non-goals（明确不做项）是否写清？若没写，Harness 会替你把哪些越界功能“补”进来？</li>
+              <li data-page-node-id="AHCIwlYI3qgkHRFAp0ilhw">若把登录态从服务端会话（session）换成 JWT（JSON Web Token），本课哪几条验收会变成无法判定？为什么？</li>
+            </ul>
+          </div>
+          <div class="pager" data-page-node-id="SZy2UFGGFbKC99UJCBfWYV">
+            <span data-page-node-id="VjJlHFECwprIuwdtHL9gec"></span><a class="btn btn-ghost" href="pages/scope.html" data-page-node-id="YbPYdePRPGFGHyRMyX513W">要做成什么样 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="js/app.js"></script>
+  </body>
+</html>

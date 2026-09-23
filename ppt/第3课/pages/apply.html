@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="73EuCrBLUKXzaXzwrTAoM0">
+  <head data-page-node-id="GdNd8a3vXEQwumLvWkyHOS">
+    <meta charset="UTF-8" data-page-node-id="Z9qLyRLUpPSP4vEqOlPGu5"/> <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="OpzjG340Rrs6FjqT1klgnD"/>
+    <title>按规约实现 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css" data-page-node-id="mACOsHyN7DmqF2kt26ybkx"/>
+  </head>
+  <body data-page-node-id="wRIGJHgbqf38Nxp6pEc2QJ">
+    <div class="app" data-page-node-id="6EMW8UgfZbAQLt2EB0uPaF">
+      <aside class="sidebar" id="sidebar" data-page-node-id="DjW10OqokmE2PLiHZ5xnuG">
+        <a class="brand" href="../index.html" data-page-node-id="rYvUQuhHH36sP61XAZBfXw">CampusClaw<span data-page-node-id="pQiBXKltZhwAkgSDgf9wck">第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航" data-page-node-id="K1AdCneQS9cK0cR99ASfgI">
+          <p class="nav-label" data-page-node-id="x5iMsmAhUMEqicBSpgEIgG">本课</p>
+          <a href="../index.html" data-page-node-id="S2BeWK47gDjPKIeUfZcewl">概览</a> <a href="scope.html" data-page-node-id="oFsStstGATqoCBFECXC84y">要做成什么样</a> <a href="architecture.html" data-page-node-id="kDTEB95HgIUnhdn29Lt6UC">系统怎么走</a> <a href="security.html" data-page-node-id="0ElXrvoRYkfZytuk0nJ4AP">安全与部署</a> <a href="auth-schemes.html" data-page-node-id="wrZAdOv6zWWNtCLkgskKQe">认证方案对照</a>
+          <p class="nav-label" data-page-node-id="CQ9ex3QcaFpb2YbSbKveXl">实现步骤</p>
+          <a href="roadmap.html" data-page-node-id="MENpwEYpbwsGakITcytUl3">路线图</a> <a href="s1-skeleton.html" data-page-node-id="GAaypdkDM0EnuxNEUqKIH4">1 骨架与配置</a> <a href="s2-data.html" data-page-node-id="lLA5PjqA48MsksGgvQDCox">2 数据与种子</a> <a href="s3-auth.html" data-page-node-id="LITtbh3xibEg6IDtsGnF7h">3 登录与会话</a> <a href="s4-isolation.html" data-page-node-id="J3tI3Vr2M98UB3nMSYx2Hp">4 班级隔离</a> <a href="s5-upload.html" data-page-node-id="NMhi6cRwk3DQ8vPzUAESl8">5 上传入库</a> <a href="s6-frontend.html" data-page-node-id="BJUZqiVd544l1RfUsFQULA">6 前端页面</a> <a href="s7-compose.html" data-page-node-id="itdopVkoXuv2EpTXgW8pNA">7 Compose</a> <a href="s8-verify.html" data-page-node-id="YozyPlyelfBOLSfR5tcXn3">8 验收</a>
+          <p class="nav-label" data-page-node-id="3mYhkLsvAAWkjABtSLmG93">核对</p>
+          <a href="checklist.html" data-page-node-id="JJAaBrheWn2IfRnFlY4ZBD">核对总表</a>
+          <p class="nav-label" data-page-node-id="qQN7uFANvWajbotzyWVsTB">发布</p>
+          <a href="design.html" data-page-node-id="qUc8zoVLLWBcmTgKXcZVjl">设计决策</a> <a href="apply.html" class="active" data-page-node-id="NaF7JVjtnRAr7hfMTPsrpE">按规约实现</a> <a href="ship.html" data-page-node-id="C63z2j3lNYQRCJ8S8VnG7Y">提交清单</a> <a href="nongoals.html" data-page-node-id="oLfzFymSjUtSmlSPjgg267">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main" data-page-node-id="OZzWmDQz12umEY9jZaIKgV">
+        <header class="topbar" data-page-node-id="pXAx5Vb6yb9Lwuer0IrYCH">
+          <button class="menu-btn" type="button" id="menuBtn" data-page-node-id="5DdX0GPXDpMEbhoE5FfDnu">菜单</button>
+          <div class="crumb" data-page-node-id="EHSCvjKf7ZVdkkFCG0u4CG">
+            发布 / Apply
+          </div>
+          <div class="badge" data-page-node-id="KJ226ZqTxjhgst6z3XwDWI">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content" data-page-node-id="wbjDpVPt8570ianc9FBomc">
+          <h1 data-page-node-id="5j5F3QQf88vulcACNzbJFU">按规约实现</h1>
+          <p class="lead" data-page-node-id="aPULeiSoNzPGkCL1HaBGpK">第一次按 SDD（Spec-Driven Development，规约驱动开发）流程做实现。最大风险不是技术，而是跳过规约一次性生成全部代码。</p>
+          <div class="note howto" data-page-node-id="FfAtwCATq0ZX58cFVKmIFS">
+            每步按同一顺序展开：<b data-page-node-id="jlyfkhLDSBtgcCubZE4Nei">知识点</b> → <b data-page-node-id="0R4AD6VDMupF6kwwA3wBEj">其他可行方案与选择依据</b> → <b data-page-node-id="eDrdFQnniXmDkSDkcpAfgv">本步要核对</b> → <b data-page-node-id="iM9geKRDwl883fDYfHlYEA">动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html" data-page-node-id="EUApwgePPLgkaRa8AFKkMi">实现方案核对总表</a>。
+          </div>
+          <nav class="steps" data-page-node-id="TGOEbko0RDUYC5uPQCbqFG">
+            <p class="steps-h" data-page-node-id="6W2WD7C9jue5iABe0zRskk">本页步骤</p>
+            <a href="#u1" data-page-node-id="hTBTJCa5JKyVW7GPji8G4e"><span class="steps-n" data-page-node-id="ZURpNaNckW8pFFS2ylp3vx">1</span><span class="steps-t" data-page-node-id="vLIbfpN4kmNYCz3I6McdTM">Apply 循环：一个 task 一轮</span></a><a href="#u2" data-page-node-id="gSWePQwsFqZmTF4FzIBe4E"><span class="steps-n" data-page-node-id="bpqOpEKGMvtXnkIkvmxmt4">2</span><span class="steps-t" data-page-node-id="VIRvxHVZNz6FdV4cJaXp7w">规约要改，走 delta</span></a><a href="#u3" data-page-node-id="NakQrhyPZ3TeI6n1y9IZey"><span class="steps-n" data-page-node-id="xAFfq15Fo3hCjeJfuaM1kE">3</span><span class="steps-t" data-page-node-id="9UoZg3KMmNVweCQnwvNT2m">受阻情形分类与驳回方式</span></a>
+          </nav>
+          <section class="unit" id="u1" data-page-node-id="OmQ7mFvpOTpFEBJ71J5ZO6">
+            <h2 class="unit-h" data-page-node-id="t0ngGB0O0atAX7FDlX7tsz">
+              <span class="unit-n" data-page-node-id="f4fRxKqd9rrcrATKNAnZQb">1</span><span class="unit-t" data-page-node-id="kTC1aU6BiEq63kHXHrCJ0b">Apply 循环：一个 task 一轮</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="zfeiQvkE76Kf2wMT6Jy8Uk">读 task → 实现 → 审查 diff → 运行 verify → 提交；失败不带入下一项。</p>
+            <h3 class="unit-sub" data-page-node-id="DF0B6AYoiPQTXKFzm4ORxq">知识点</h3>
+            <article class="kp-card" data-page-node-id="zyrACNLT31N70Fq0AWWvI8">
+              <h3 data-page-node-id="cTn7JFGUCccmybwOYdoHok">Apply 循环</h3>
+              <p data-page-node-id="cAxMEBQSYHrPJTKPhFV5CI">读 task → 实现该项 → 对照 spec 审查 diff → 运行 verify → 通过才提交。<b data-page-node-id="mEKTskuAwZ8wROmQaqL1c4">一个 task 一次提交，失败项不得带入下一项。</b></p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="JBnDnWUOC8DMXKjtl78zO1">其他可行方案与选择依据</h3>
+            <table data-page-node-id="P9Kx7u53ODnikRuOu9r2fi">
+              <thead data-page-node-id="ZbnMzlWIzXOcWRbNOU3eg8">
+                <tr data-page-node-id="6s3ANer8VaU4H2LQ8RhlHR">
+                  <th data-page-node-id="5CAlbVYIre2N0QS4C6cAtF">方案</th>
+                  <th data-page-node-id="flBMRb6J9KdFSWnNvqFtAD">要点</th>
+                  <th data-page-node-id="KTI5eL4mMdHzwnVY07zhry">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="9jEimtUHIxvoLB7lPpnTPY">
+                <tr data-page-node-id="gAGED3Cett5MKBGTBt4MOZ">
+                  <td data-page-node-id="REzFu4DNrvcDQBaC8xldaX">一个提示词生成全仓</td>
+                  <td data-page-node-id="PZewXPGXYlvFGARaszZMLP">表面上实现快。</td>
+                  <td data-page-node-id="rr4NDJryFNjioaqXCVMF6J">否决。按 task 循环，才能审查 diff、运行 verify、必要时回退。</td>
+                </tr>
+                <tr data-page-node-id="5Q85Q5FhhU5cV83HoB3ml2">
+                  <td data-page-node-id="Y1MEFv8Bueyov2z8F7TXAU">沿用第 2 课 Propose 对话继续写代码</td>
+                  <td data-page-node-id="b5xPIEreyWsK8pn9UOEedk">有上下文。</td>
+                  <td data-page-node-id="DVywhPaWtSRqprCLe1R5tB">否决。对话记忆会取代规约。必须新开会话并先复述范围。</td>
+                </tr>
+                <tr data-page-node-id="dRkWZj1GDpnGPKHuvAOGCv">
+                  <td data-page-node-id="wzj1kvcjyQR7OOr3Xk2lPI">复制他人学期仓库后修改界面</td>
+                  <td data-page-node-id="5VFURe1QYGu2BX4hGk91Oc">可直接运行。</td>
+                  <td data-page-node-id="Io3CHpcs7dpNumqfNcCGb2">否决。实现必须落在本人 OpenSpec。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="ytIqFlJZ8DTKVy2P4B794H">本步要核对</h3>
+            <table class="check-table" data-page-node-id="gXvKY52EngPZVDNoE6Urxr">
+              <thead data-page-node-id="paDkLl8ykCGq0w2MZ6g8q9">
+                <tr data-page-node-id="Wv1kgPrG5Avjg9rhbTW0Xe">
+                  <th data-page-node-id="FgGQoTziPixdEt9CR7ahti">核对项</th>
+                  <th data-page-node-id="QbukFG4cIyuru0FAWkx18B">本迭代应采用</th>
+                  <th data-page-node-id="bHOeFu6ViAP9TMY0Wlj94N">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="E4GhIUvby9L3UHKOeUF6zF">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="Auo1tTbbvSctbggsiQgJXy">
+                <tr data-page-node-id="mbZU1ffk0yYazaVUYZRfJ1">
+                  <td data-page-node-id="bqdRrBccmhIsgbnK5FFtjc">是否一个 task 一轮提交？</td>
+                  <td data-page-node-id="QO4DgtVhkMZx6ZmImgP2Yy">是：实现 → 审查 diff → 运行 verify → 提交。</td>
+                  <td data-page-node-id="YLNDzB3pgc9kFzCQKTxVXX">
+                    <b data-page-node-id="yt8DG1TLDav1QIJdgAtsHC">规约</b>：<code data-page-node-id="nOEEzd9oo8kwEfndc9Ka9F">proposal.md</code> Non-goals 与 <code data-page-node-id="WX8ufGaEsLLgZYSaeiP9Wp">tasks.md</code> 开头 Apply 约定<br data-page-node-id="iJEIKcqRRr1MYL6wDV9DEd"/><b data-page-node-id="mOVNguFqwqnioJGpP6XS1e">代码</b>：看提交历史粒度<br data-page-node-id="jCP9eVfY2XbfWnj5E1eprh"/><b data-page-node-id="TmkXKr2XkqnhLUQbacg9Yo">运行</b>：任取一轮提交，检查是否只对应一个 task
+                  </td>
+                  <td class="tick" data-page-node-id="MDpblPARkObUdoUal7ivfP">
+                    <span class="cb" data-page-node-id="Urw7BFZyjU0RWKWuvv17o8"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <article class="kp-card" data-page-node-id="WZMKm2kkWPJJqYSuhcmGJF">
+              <h3 data-page-node-id="rUwGeu5Dvbi1Ug9u2A8JjG">Apply 阶段只产生两类改动</h3>
+              <p data-page-node-id="g2HzsxhdnVf4w5Eakdtm3U">一类是<b data-page-node-id="fTXIEC1zdWE9FuzTJq73ob">代码</b>：Harness 依据 delta spec 与 <code data-page-node-id="vVYbnn1PDXtJhRPeTLeEZY">design.md</code> 生成，逐 task 审查 diff。另一类是 <code data-page-node-id="qJ1sSyhCEFijiDJU7ECo9E">tasks.md</code> 的<b data-page-node-id="AeVzdmyJoa6mJjRMYs8tQ7">勾选</b>：verify 通过后由人勾上。</p>
+              <p data-page-node-id="ybptxHQVEoIB4kCrdL98Jm">除这两类之外，只有一种例外：发现规约本身含糊或缺失。此时先改规约（走 delta，见本页第 2 节），再回到实现——<b data-page-node-id="Pit0usGVVyt4A7PGjDY2DE">不允许以代码去迁就规约中含糊的描述。</b></p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="AsEH6XAYxhs4DTIikeORR4">动手要做</h3>
+            <ul data-page-node-id="MOVJKPlGLmhssYyH9BeQj0">
+              <li data-page-node-id="oXuQkBbQKg7OruwlkIHJkD">命令：<code data-page-node-id="EFQIsxMej2yQoFCoBNxwFc">/opsx-apply</code>（技能 <code data-page-node-id="SsSpHHX2ZcM0JjDxmsXJL2">openspec-apply-change</code>）。</li>
+              <li data-page-node-id="UNDgjGv7EGrNYSp43t6mO1">不要接着第 2 课 Propose 的旧对话生成代码。</li>
+              <li data-page-node-id="mOSSGbGEQEvZ4DtCXYGI5V">不要把他人仓库整体复制为作业提交。需求描述说明的是产品范围，实现须落在本人学期仓库。</li>
+            </ul>
+            <div class="note" data-page-node-id="Jwf9u7e2NHBtDf2An4Vrip">
+              <b data-page-node-id="2lrniTODJEGsqkwWGV4FRF">开始 Apply 之前先过准入检查。</b>以下四条必须能在本人 change 的 delta 里找到原文，缺一条就先补规约再动手：未登录响应不得含材料标题与正文；跨班按 ID 访问已选定 403 或 404 并准备写进 README；租户标识只取自会话、客户端传入一律忽略；上传失败要求库与磁盘均无残留。
+            </div>
+          </section>
+          <section class="unit" id="u2" data-page-node-id="VV0BoQqAPTkV87vIFCoOU5">
+            <h2 class="unit-h" data-page-node-id="gxfUiuIhRg99eg7qOfE7gB">
+              <span class="unit-n" data-page-node-id="T4xF9eQqoDDwFeGIkOBLJF">2</span><span class="unit-t" data-page-node-id="iwYAgubIxAUvHA9mfpeCcY">规约要改，走 delta</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="4yvK6Pz1HTDa0KTvgHj93k"><b data-page-node-id="xPxGiwaeIqeVBci1mJy22u">Apply 期间唯一允许改规约的入口是 change 里的 delta，不是主力规约。</b></p>
+            <h3 class="unit-sub" data-page-node-id="bBOvhGKgZl4F1YwIdGLVRp">知识点</h3>
+            <article class="kp-card" data-page-node-id="kuF42uMeMrBPSgXGgYmCPh">
+              <h3 data-page-node-id="dyRkv0uO1wHL7jWCd0WOkb">delta 是相对主力规约的差量</h3>
+              <p data-page-node-id="GM0TcxJ4kMpgJHA5WjPGUi">change 里的 <code data-page-node-id="zv6ELXeLdpzS3tzImIusDz">specs/&lt;capability&gt;/spec.md</code> 不是一份完整规约，而是这次变更相对主力规约的<b data-page-node-id="RpC6mz6XMnGjTxHbJmOVFj">差量</b>（delta）：只写增了什么、改了什么、删了什么。这样做的好处是归档时能逐条比对，明确知道这次动过哪些要求。</p>
+              <p data-page-node-id="fFf8VN2OMYWqEED46hn3ui">因此 Apply 期间要改规约，改的是 delta。直接编辑 <code data-page-node-id="8H53kGgLPihM5jQpVUipLZ">openspec/specs/</code> 会把「差量」与「基线」混在一起，归档时无从比对。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="AbYWszAG7NEJOda8GpRZ44">delta 的分节写法</h3>
+            <table data-page-node-id="n7PK5xbmkzaz1BTAeMKmF2">
+              <thead data-page-node-id="sUb8DoZ1H9sOQiEPW4MhhT">
+                <tr data-page-node-id="wAy2iWHwGEEMqvqpilvOEL">
+                  <th data-page-node-id="1GOeR0LmCqHNXzPDXpdKJ4">分节标题</th>
+                  <th data-page-node-id="0AN0iukw9Kv8OF4OlGT8Xz">什么时候用</th>
+                  <th data-page-node-id="za77CeZP2BstJ6blQ6xfRM">本 change 实例</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="Olg3oRnXUJO5d9kVz3oYgj">
+                <tr data-page-node-id="cGlPfBVP320GD49TIyjN2p">
+                  <td data-page-node-id="vQKlyGnyD6ou1CmJnn5hwB">
+                    <code data-page-node-id="HDqNtgDbPQc5s5LtzTrBB4">## ADDED Requirements</code>
+                  </td>
+                  <td data-page-node-id="jvjvM4V9ril75L1VDuRDZo">本次新增的能力</td>
+                  <td data-page-node-id="BAh99TnOBO29dyE9W5pCx6">本 change 的全部 Requirement 都是新增，所以只有这一节</td>
+                </tr>
+                <tr data-page-node-id="Ys5G6cZ3mr9jttY0KcRJis">
+                  <td data-page-node-id="xiGPTwPM6804g9FHnZ1Idy">
+                    <code data-page-node-id="5q39TJ7DBbqm1oO3GxHisx">## MODIFIED Requirements</code>
+                  </td>
+                  <td data-page-node-id="xilwZDJWFW9sLwKi5I71bA">主力规约里已有、本次要改的要求</td>
+                  <td data-page-node-id="Szl4Ai54J5KpL8kVjK3ffO">本课没有——迭代 1 是第一次入库，主力规约还是空的</td>
+                </tr>
+                <tr data-page-node-id="be76IvoCi1RIuvI9EucisM">
+                  <td data-page-node-id="3knmM5uTWeZttge5ahwS39">
+                    <code data-page-node-id="kJydDCKDfmvL6qnKLrNpnL">## REMOVED Requirements</code>
+                  </td>
+                  <td data-page-node-id="4TVSVJqhUq5ipEgw7O5GXN">本次要撤掉的要求</td>
+                  <td data-page-node-id="UlgqdRhhUN1vd7DNtzgkMj">同上</td>
+                </tr>
+                <tr data-page-node-id="JXGVXdufblKB5ChLbWBauA">
+                  <td data-page-node-id="xBllFdAu8wtDhfz9iEANcL">
+                    <code data-page-node-id="fhBCvZ4DYkvS8n5j9Xhrnu">## RENAMED Requirements</code>
+                  </td>
+                  <td data-page-node-id="e3yHHFRRWb1znAuxqdqjXs">要求改名（较少用）</td>
+                  <td data-page-node-id="tL1WmD0MGBXpmYkhCyogLu">同上</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="note" data-page-node-id="KZX4Qk4FCLsBSSVknaI2hi">
+              每条 Requirement 写在 <code data-page-node-id="5uNlM7wFrDOdLR5sD82Ieh">### Requirement: 名称</code> 下，正文用 MUST / MUST NOT 这类规范性动词；每条 Scenario 写在 <code data-page-node-id="akp2n8K8ticCiS4rEnD94r">#### Scenario: 名称</code> 下，用 <b data-page-node-id="1NUsSFjvhWx97c7PTICOaA">WHEN / THEN / AND</b> 逐行给出可判定的步骤。唯一标准是：仅凭这条 Scenario，能否判定通过或不通过。
+            </div>
+            <h3 class="unit-sub" data-page-node-id="Q6C0gxlCseTb7CGtBWJNCg">本步要核对</h3>
+            <table class="check-table" data-page-node-id="0EcRMubXvdXl8HAqeie9r5">
+              <thead data-page-node-id="qb3RvMbqWn9DBmHRCqDU4c">
+                <tr data-page-node-id="zdsABScGVFQZCCwijfcnOE">
+                  <th data-page-node-id="US27nn8j0NHnjsuzuTbOq0">核对项</th>
+                  <th data-page-node-id="8wHB5J8tEnMq7s2OJHFZ0o">本迭代应采用</th>
+                  <th data-page-node-id="2MeIuT87mDv3AZSDWslRnG">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="BsuTafgEEZmyaWwOoZpsKC">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="uPT9u8r9x2LwhV1AiSOkmL">
+                <tr data-page-node-id="HmCH2c4wrmSXx8L89dNyfa">
+                  <td data-page-node-id="FHSaffsjTCydMXBcf2Cl02">改规约时改的是 delta，还是主力规约？</td>
+                  <td data-page-node-id="OiT8RWkrHB9NfuSfZFe4zp">只改 change 里的 delta。<code data-page-node-id="0gHtEITYQqach2TnWnXzjj">openspec/specs/</code> 归归档维护。</td>
+                  <td data-page-node-id="lKiQlxbkldduPN5ayN9TJD">
+                    <b data-page-node-id="uRORLwwIseEPi3lAG2suKK">规约</b>：只改 <code data-page-node-id="xFH2fwsLosjvQdmMYCQAEC">openspec/changes/&lt;change&gt;/specs/</code> delta，勿写 <code data-page-node-id="nxJkS0XoP23XFikrI5zi8a">openspec/specs/</code><br data-page-node-id="eIq5ap7MVWGkxtQXrHQ3uM"/><b data-page-node-id="kIGGv65YYC7u4ayQ60Y0ew">代码</b>：<code data-page-node-id="Mki4WTnTyKNA6ZXcsrilW1">git status</code> 看本轮改动的路径<br data-page-node-id="wDiPto3aAWVsVHNbJweW2V"/><b data-page-node-id="7MswG7rqX7z9cTIN1gMlxv">运行</b>：<code data-page-node-id="g736CzLDCbOCHOA6LAWSvN">openspec list --specs</code>，归档前不应出现本能力
+                  </td>
+                  <td class="tick" data-page-node-id="XkqpcbzJuVed4ve1BriIoB">
+                    <span class="cb" data-page-node-id="FKVCQuixPEKrkS58iWg6yU"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="hzo6YOqwppnamJvM8BOQj2">
+                  <td data-page-node-id="NyCIneXFEF2yaJqijcQ244">规约改动是否早于对应代码？</td>
+                  <td data-page-node-id="62fPCvkAUL4E6iAublbUzW">是。<b data-page-node-id="39E9mrKG9eMpECC4DTWDJf">先改规约再改代码，否则验收标准会随实现发生偏移。</b></td>
+                  <td data-page-node-id="9OXiK0Et7L7sH4WTt2eE0B">
+                    <b data-page-node-id="LWC8bIq1TdIvb8RLP0kXf3">规约</b>：是否有该流程要求<br data-page-node-id="HD2pCgTw4CJkhjpYsbtnQr"/><b data-page-node-id="fGysutsVOCG2n1x2WEV3JX">代码</b>：看提交顺序<br data-page-node-id="Z9a4gKyjI2YF7SjHLRIAXf"/><b data-page-node-id="U7fUjxK4roMhweoLIHFTAv">运行</b>：比较 delta 提交时间与代码提交时间
+                  </td>
+                  <td class="tick" data-page-node-id="Lk3YJDtkE6uiarNb3a7fYR">
+                    <span class="cb" data-page-node-id="COUtMWmb1TAn8hWTAK8UFU"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="3ecI74s0HEhZrfBH2uyY7z">
+                  <td data-page-node-id="YMxHU9woSYHS1ZFgzAdgoY">改完规约是否先校验再继续？</td>
+                  <td data-page-node-id="QZ2jhpAt9wIl1y4Qn0zAWB">是：先 <code data-page-node-id="oxJtrPoppmBN6q3AhlVEcv">openspec validate &lt;change&gt; --strict</code>，确认格式与 Scenario 仍可判定。</td>
+                  <td data-page-node-id="4YSGLaRgC24OqmIFw4WCZU">
+                    <b data-page-node-id="EmmtQHATXYv3HYSRh5CmxZ">规约</b>：是否有该流程要求<br data-page-node-id="fRub0jHfcqY76EMDdGgaH8"/><b data-page-node-id="TBLXHDUF4hTVKoIl46ZoVa">代码</b>：看本轮提交里是否含规约改动<br data-page-node-id="NVaJ0GhA8zmbodi80J9kmW"/><b data-page-node-id="oIHNxZZuQhStAzIdjsLUmo">运行</b>：改完立即跑一次 validate
+                  </td>
+                  <td class="tick" data-page-node-id="8tzxkFGlUijISzCiAdWAfr">
+                    <span class="cb" data-page-node-id="oUV70ix6bDB3cAYeXichVa"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="1ESZNBIEBYlXO7KMxKMriY">动手要做</h3>
+            <ul data-page-node-id="aGmOKV3uym0AvKcHBEijS0">
+              <li data-page-node-id="VywrbsjGs6fYxnN6bVKeke">规约含糊或缺失时，用 <code data-page-node-id="8oCe6AUhhfEei4dOPixP8g">/opsx-update</code>（技能 <code data-page-node-id="sWXpjjceAGEnb3wLYDrkF9">openspec-update-change</code>）修改 change 的 delta，不要直接编辑 <code data-page-node-id="BFR9MOBpOg0ogg2EmGz0uu">openspec/specs/</code>。</li>
+              <li data-page-node-id="ylTQNDAs98Wo0ovGAQ7M8y">改动只限于 <code data-page-node-id="7J1pH02CiA9nz0wuz7i9t1">openspec/changes/&lt;change&gt;/</code> 下的 Markdown；一并将 <code data-page-node-id="gC7IBN5HQ1IgClYgACZpdX">proposal.md</code> 的 Non-goals 或 <code data-page-node-id="7DyNUnNF6em6b1Q8VsVVUZ">design.md</code> 的 Decisions 补齐。</li>
+              <li data-page-node-id="sdBfXdaAQQPADBlkN8AEnQ">改完先跑一次 <code data-page-node-id="yP10hXR0HQdBLDscSQo0SI">openspec validate &lt;change&gt; --strict</code>，再回到 Apply 循环继续实现。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u3" data-page-node-id="yN7oq4xOY1WArDMBPvn0VD">
+            <h2 class="unit-h" data-page-node-id="ViIkCsvLiABlIlLBSyQx47">
+              <span class="unit-n" data-page-node-id="WJaqp56Yp3oWfemJHQpi0n">3</span><span class="unit-t" data-page-node-id="mJfjzEABWpPMge5L9Lemrs">受阻情形分类与驳回方式</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="7GSxpjcGJJ3hH3a6GFHdtF">规约含糊先改规约，实现偏离引用 Scenario 驳回，环境问题按 README 从零复现。</p>
+            <h3 class="unit-sub" data-page-node-id="ILuQrtJjzBew6YkUbYemqa">知识点</h3>
+            <article class="kp-card" data-page-node-id="zCnsZKZoUpXsYTG2FSCe1R">
+              <h3 data-page-node-id="EBOWrrzeHVUIHyECAQExE0">三类受阻情形</h3>
+              <p data-page-node-id="AbkDkDFrT6Iy5HQEZsgkv4">规约含糊：先改规约再继续。实现偏离：引用 Scenario 驳回。环境报错：按 README 从零复现，复现失败再排查环境问题。</p>
+            </article>
+            <article class="kp-card" data-page-node-id="JFikUBryJuWmq1Esp5I7X2">
+              <h3 data-page-node-id="IKisvRfno43Op3mSXaEQbB">审查责任不转移</h3>
+              <p data-page-node-id="EwoijJW9Fszqx3Gq7tHsPX">Harness（AI 编码代理）的产出仍由提交人负责。用隐藏按钮伪装权限控制、额外生成聊天界面，都属于范围蔓延（scope creep）。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="60VPwg4yBEYaEq4E3eJlL9">本步要核对</h3>
+            <table class="check-table" data-page-node-id="uXyngSjATh9jnEXT1KRwaZ">
+              <thead data-page-node-id="EARDME8k0pzjUTEMosOSKz">
+                <tr data-page-node-id="5zLnomDufvVFffYFFvavtP">
+                  <th data-page-node-id="I0BqCu1YgIqIRCV32Kqgy7">核对项</th>
+                  <th data-page-node-id="3y0b673CgThz353vo13NPx">本迭代应采用</th>
+                  <th data-page-node-id="OchBBXF783C4EhVVF6Tb6W">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="xuH1RO4GLKScBPb4JgqbRE">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="jFUvyOOlYKFM2hmyfS7gED">
+                <tr data-page-node-id="mrbcLdCkEb2yiEe52GEqkO">
+                  <td data-page-node-id="uVQcHhJi3jwShSD27LtG1g">驳回生成物时是否引用 Scenario？</td>
+                  <td data-page-node-id="hi0kIsYOafR36nfwaFgZ4P"><b data-page-node-id="H3ie9aIDbAEeOQUv2eUxoQ">引用规约原文驳回，而不是通过追加对话扩大范围。</b></td>
+                  <td data-page-node-id="HRPdxmPqSOA2Hf3L3Ztk5E">
+                    <b data-page-node-id="fD2g0xSf8kgjB0W96B97Mi">规约</b>：是否要求引用 Scenario<br data-page-node-id="WrBPQaf4xjuoGqY582gP0S"/><b data-page-node-id="ppEKK882C0YrA9SN6uQfeC">代码</b>：回看对话记录中的驳回方式<br data-page-node-id="F2Gz92mKvnBgJIH6A1JcTv"/><b data-page-node-id="Yb43ul33wjZ9lmrzyaefHc">运行</b>：能否指出被驳回的实现违反了哪一条 Scenario
+                  </td>
+                  <td class="tick" data-page-node-id="zilSkuA8KdLL3NCUkHWdBF">
+                    <span class="cb" data-page-node-id="aZ1naBYFtTCil6pdmQrWO1"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="upbDMtJjTNvD9MzXiznSgw">
+                  <td data-page-node-id="ERmdUW1PgeWaY063DXo41a">Harness 产出中是否出现范围蔓延？</td>
+                  <td data-page-node-id="AbMQUjmjZzrigAV6PJAGvU">无：不用隐藏按钮伪装权限控制，不额外生成聊天界面。</td>
+                  <td data-page-node-id="W10lppcQfWwPryWZflLzWf">
+                    <b data-page-node-id="LOH3SNjVWiLvPbOy0nzrgn">规约</b>：<code data-page-node-id="gzPjEOu4grNfSgq1HoSk9W">proposal.md</code>「Non-goals（非目标）」<br data-page-node-id="YM2qLBcFMb0KcpLQ3PeImY"/><b data-page-node-id="tJXeqzt5nGL28kZUwrE1ot">代码</b>：搜新增路由、页面与依赖<br data-page-node-id="ueIf8iijvbMP9GllUgBqvp"/><b data-page-node-id="EvGf6gaMCJ0an1ZkugdOu1">运行</b>：对照 Non-goals 逐项排除
+                  </td>
+                  <td class="tick" data-page-node-id="7pNMOnsHxrCKJVSQmh0Z0h">
+                    <span class="cb" data-page-node-id="GFdy0LdzJmCwIt0WXs4ZmY"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="6mRFELiEas0NJ4BD2qSoVB">
+                  <td data-page-node-id="Q9QKmp4QdfaKNc280qwfPS">规约含糊时先改规约还是先改代码？</td>
+                  <td data-page-node-id="Mm3CatjPumi8VuQh3UFUAr">先改规约，再改代码；否则验收标准会随实现发生偏移。</td>
+                  <td data-page-node-id="fuoGYT1KFrjN40tLLp9nP0">
+                    <b data-page-node-id="1H5I4D4ssPtFA8YWIXl9Ai">规约</b>：是否有该流程要求<br data-page-node-id="VXHY8QHA61VcbTiBpGiQFt"/><b data-page-node-id="v4E02RIhagKl7pOERK0ccf">代码</b>：看提交顺序：规约改动应早于对应代码<br data-page-node-id="0X6HuhSEvWWx8BJR9Jrpkx"/><b data-page-node-id="pLVUYsceN6HEMPzWrNHiqC">运行</b>：检查本轮 spec 提交时间是否早于代码提交
+                  </td>
+                  <td class="tick" data-page-node-id="zt5z8OMyUEDEvdh8nA5Ee2">
+                    <span class="cb" data-page-node-id="AD3oj9gtW0SUvzfmgaLPWk"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="m8791FoaR6SJIUxYC1WuC3">动手要做</h3>
+            <ul data-page-node-id="DaHHjDpeytgLNxgvCtIKZ6">
+              <li data-page-node-id="By9cumIFQce2P3jzPfoRTf">规约含糊先改规约。用隐藏按钮或切换角色伪装权限控制，引用 Scenario 驳回。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u4">
+            <h2 class="unit-h">
+              <span class="unit-n">4</span><span class="unit-t">开始 Apply 前：规约清晰度自检</span>
+            </h2>
+            <p class="unit-lead">把下面的问题发给 Harness，让它代为审查四件套。<b>查出的问题回到 delta 修订；它没查出来的，责任仍在提交人。</b></p>
+            <div class="ask">
+              <p class="ask-h">可直接复制到会话中使用。以 change 目录（proposal.md、design.md、tasks.md、specs/auth-upload/spec.md）为审查对象，逐项给出文件与行号。</p>
+              <ol>
+                <li>可判定性：对 spec.md 的每条 Scenario，各构造一个“满足”与一个“不满足”的具体行为示例；构造不出“不满足”示例的，说明该条不可判定，列出对应 Requirement 编号与原文。</li>
+                <li>术语一致性：列出四件套中的自定义术语、字段名与状态码，指出同一对象出现两种写法或相互矛盾的位置（例如同一响应时而 404 时而 403）。</li>
+                <li>响应语义：对规约中每个接口，检查是否写明成功与各失败分支的状态码及响应体要求；列出未写明的接口清单。</li>
+                <li>边界与异常：列出每条 Requirement 未覆盖的输入边界（空值、超上限、重复提交、并发），逐项判断属于 Non-goals 还是规约缺口，缺口单独列出。</li>
+                <li>任务覆盖：对照 tasks.md，指出哪些 Requirement 没有对应 task、哪些 task 缺少可执行的 verify 判据。</li>
+                <li>范围复述：用自己的话复述本次任务范围与 Non-goals，并列出你计划实现的路由与数据表清单；与 proposal.md 对照，指出超出与遗漏。</li>
+              </ol>
+            </div>
+          </section>
+          <p class="note" data-page-node-id="YdxTOkaqsua3rQEWaFwfN2">把否决理由用自己的话写进 design / 迭代说明；原文照录本表不算 ADR。</p>
+          <div class="think" data-page-node-id="7l81nEzbC461OqRzTfYW94">
+            <h2 data-page-node-id="5Vy7DspkfYwvZZFBrXHV0s">想一想：判断与取舍</h2>
+            <p data-page-node-id="9ogsEaRad9zbxNdRf53GKa"><b data-page-node-id="rZoBN25gWUnXuOFmwwaixh">先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul data-page-node-id="yitezAWoxhMKOaAmYDNCyb">
+              <li data-page-node-id="3MaUSBWFTvWzP5JmG9OE7G">当前受阻的是规约含糊、实现偏离，还是环境问题？下一步应改规约、驳回生成物，还是从零复现 README？</li>
+            </ul>
+          </div>
+          <div class="pager" data-page-node-id="6b4QIVQYoxA0Ujvmjo210s">
+            <a class="btn btn-ghost" href="design.html" data-page-node-id="pLGa8RKhdowzBcSFh55DXd">← 设计决策</a><a class="btn btn-ghost" href="ship.html" data-page-node-id="dPKb06o5AUHgBYfe4fDNwl">提交清单 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="vBcklNLzT69e55lZAipafy">
+  <head data-page-node-id="pMUkj7bD94oJqS13UusO6v">
+    <meta charset="UTF-8" data-page-node-id="gOhSEaZEAPkHi5Gegmrmue"/> <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="VumQqJgG5Ua1kkcc4bkDTS"/>
+    <title>要做成什么样 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css" data-page-node-id="JMAnBkLUpoPXK43vPiy5Tb"/>
+  </head>
+  <body data-page-node-id="joJesmnAKl7KRsxTvD7JFA">
+    <div class="app" data-page-node-id="4GkiB0ieLiMXGRDnR4kLWx">
+      <aside class="sidebar" id="sidebar" data-page-node-id="WgkOFBzOT4ckSPuQMqho95">
+        <a class="brand" href="../index.html" data-page-node-id="FrxfemMUkUaW9d0zXmp2Di">CampusClaw<span data-page-node-id="CyAl92D66CiIbq1DOrusqf">第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航" data-page-node-id="PIpFDvGNTgiwixCnF1UFAc">
+          <p class="nav-label" data-page-node-id="dTy2l4vXxlw8HrdfEJI7tT">本课</p>
+          <a href="../index.html" data-page-node-id="LqreYSNmbngQ8kWurjuzoK">概览</a> <a href="scope.html" class="active" data-page-node-id="y8fIMVFaz5aBcSySuyyM9H">要做成什么样</a> <a href="architecture.html" data-page-node-id="JMm7XklvxLYF6ALYURANJv">系统怎么走</a> <a href="security.html" data-page-node-id="9QXDXVcw5fSzPI11jiZBnn">安全与部署</a> <a href="auth-schemes.html" data-page-node-id="B8nIFbUoRDwJo8ETFGSZbR">认证方案对照</a>
+          <p class="nav-label" data-page-node-id="q4ka1YOTKbTbCjZ5TyDXL2">实现步骤</p>
+          <a href="roadmap.html" data-page-node-id="vepdEWbUfOxSB7P6kQyeGP">路线图</a> <a href="s1-skeleton.html" data-page-node-id="B4uYFFuAFXAsqRjlg8iXUX">1 骨架与配置</a> <a href="s2-data.html" data-page-node-id="2kXVGfkMnSnJqrEB62rLTa">2 数据与种子</a> <a href="s3-auth.html" data-page-node-id="P9XgRTxQeeyPFcBWZyqcrK">3 登录与会话</a> <a href="s4-isolation.html" data-page-node-id="r1FCkUmBgQi00iLjGWElCE">4 班级隔离</a> <a href="s5-upload.html" data-page-node-id="NPuHxTTqMaEnHlTBRMA1ER">5 上传入库</a> <a href="s6-frontend.html" data-page-node-id="yoil828imFEB8mHh8MMwmN">6 前端页面</a> <a href="s7-compose.html" data-page-node-id="tzUp0Ba0i9G0odbeWiAo80">7 Compose</a> <a href="s8-verify.html" data-page-node-id="xYYPrMKLYR6SkXK1Lr8gVN">8 验收</a>
+          <p class="nav-label" data-page-node-id="C7WnkpNw6Zbdc1JkD6ZTzz">核对</p>
+          <a href="checklist.html" data-page-node-id="iRh8zCXD4fGOQC2EOHLXlP">核对总表</a>
+          <p class="nav-label" data-page-node-id="dtnsetwNy4XV3hqWeEpiGf">发布</p>
+          <a href="design.html" data-page-node-id="SbVBbmvCqsMVAzOywfrQ9S">设计决策</a> <a href="apply.html" data-page-node-id="SQGQjzKpEGLSdtQMiXk8XA">按规约实现</a> <a href="ship.html" data-page-node-id="74Cf6A7jCOLFX6BuI9SkvL">提交清单</a> <a href="nongoals.html" data-page-node-id="rTjGigxIRPAVLIGiP6X59R">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main" data-page-node-id="P5EjBI3GS7KakuxQPIRV3C">
+        <header class="topbar" data-page-node-id="SqKY1guWpSMDOk9Z24YE8f">
+          <button class="menu-btn" type="button" id="menuBtn" data-page-node-id="RDKpZq9UOen4GO4sPXy9CX">菜单</button>
+          <div class="crumb" data-page-node-id="FYdrWaAdgN17uBXhcOOcHl">
+            产品范围
+          </div>
+          <div class="badge" data-page-node-id="UcSfCY1pgAI8C9ujQ1PQ8X">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content" data-page-node-id="D9vDoRT26k4vymfWAAu6Dq">
+          <h1 data-page-node-id="aGKf9L4bnGwkdU1HCI68Es">要做成什么样</h1>
+          <p class="lead" data-page-node-id="kMcI3RZrjlNUFkzrSafHc3">对照迭代 1 的产品目标与 OpenSpec 可验收范围。以本人学期仓规约为准：能力不少于 spec 的 Requirement/Scenario；未写入规约的体验条目属产品愿景，不必做（分层见本页第 3、4 节）。Apply 起点：<code data-page-node-id="sdwWAlevK99FYM7vg0e80K">project-src/week03/</code>；完成对照：<code data-page-node-id="LiIGhoHBopqYdNJKCwqvx7">project-src/week03-applied/</code>。</p>
+          <div class="note howto" data-page-node-id="1fEMQwDgvIkpvCTzdElDro">
+            每步按同一顺序展开：<b data-page-node-id="REV7Xo5lUwKhJLGTPx9MkC">知识点</b> → <b data-page-node-id="HncTPsBoWJk59V2xtjZyXm">其他可行方案与选择依据</b> → <b data-page-node-id="W6cD8MvvED7Hlcw5IiOTcn">本步要核对</b> → <b data-page-node-id="MyD2FYrHvxj6ZXi4mGwTOJ">动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html" data-page-node-id="HYMsGlE69knmJQfE7d6dd9">实现方案核对总表</a>。
+          </div>
+          <nav class="steps" data-page-node-id="BBD98caRDKatUuFlAnuNsN">
+            <p class="steps-h" data-page-node-id="fvWZ48tWCA3sNSGiEAx4pm">本页步骤</p>
+            <a href="#u1" data-page-node-id="c3dxJ7U8sOEdkC1dHGcTAL"><span class="steps-n" data-page-node-id="BHGHG6riu3ZXre5bYcwIui">1</span><span class="steps-t" data-page-node-id="Gptf9I5hpSpm97p33YBpFT">账号与角色：谁能做什么</span></a><a href="#u2" data-page-node-id="nxGQAAlYIJGNtDOvaaUOJY"><span class="steps-n" data-page-node-id="I9UTm8WUHUVIWHKpnGPT0s">2</span><span class="steps-t" data-page-node-id="X1hG1YDg9vGKXFBwnX3vEO">班级：数据边界从哪里来</span></a><a href="#u3" data-page-node-id="KetidkZmrA4h6ylk4MvJl3"><span class="steps-n" data-page-node-id="9fKbJbcLsDsuIyNrCgnLoS">3</span><span class="steps-t" data-page-node-id="37xuQDuthLfjyNA6VTM7U9">材料与知识库：本迭代做到哪一步</span></a><a href="#u4" data-page-node-id="qZ0HFDAdvIOv8qhATXbGA3"><span class="steps-n" data-page-node-id="dvWXBma3htWwGQwQzhPDG0">4</span><span class="steps-t" data-page-node-id="KHJMl2IwOAJB9XhncfbdPW">页面体验：可选增强，不能替代鉴权</span></a>
+          </nav>
+          <section class="unit" id="u1" data-page-node-id="Haldw8nOLT9AH3QSsfiKBN">
+            <h2 class="unit-h" data-page-node-id="RH28uUNxfNpUHb4njCLAlM">
+              <span class="unit-n" data-page-node-id="iI6Y3FYDNPsEAcV0XjJQn2">1</span><span class="unit-t" data-page-node-id="0WR7EeGHNkLQS2s9YSukHs">账号与角色：谁能做什么</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="D0N1KGJ3chQEHBweDj7BwA">本迭代只实现教师与学生两种角色的权限；平台超级管理员是产品完整形态里必然存在的角色，但不在本迭代。<b data-page-node-id="crtCUxMnIauYH7eziNEJ0h">能力边界要写成可判定的要求，而不是界面上看不看得见。</b></p>
+            <h3 class="unit-sub" data-page-node-id="NuL3ucaB50FaYsbEMuV5Mq">知识点</h3>
+            <article class="kp-card" data-page-node-id="emkMOTBawDo4vighlfNDF2">
+              <h3 data-page-node-id="edjucEdfnG7cQhjauC2CQr">最小权限</h3>
+              <p data-page-node-id="PJJlEUpJZHmqeVCRH017DQ">教师可上传、查看、下载；学生只能查看和下载。<b data-page-node-id="SRCPr1llv98cBvhMOEZDWh">多给的能力就是垂直越权面。</b>角色来自服务端会话，不来自前端切换。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="SEE7PeF3UUcXbCIbGhJNmb">其他可行方案与选择依据</h3>
+            <table data-page-node-id="pKKDtb1J9v45w1ZKHy1YiY">
+              <thead data-page-node-id="Q3Ay3bg0ExZKzPOz4xxlCv">
+                <tr data-page-node-id="UIBHPhwEGIt7zmiLavA4Zz">
+                  <th data-page-node-id="klgJLUDBRIpi42VR78CvLQ">方案</th>
+                  <th data-page-node-id="nJPmFYoploVEAtSAkE4XRd">要点</th>
+                  <th data-page-node-id="1tDOOLXenNbjMON7XSyi47">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="NOuBbgwX56RxJRtg6qgMhU">
+                <tr data-page-node-id="Oqv30tVNH3nCgMhhEavgT0">
+                  <td data-page-node-id="MmTw8A5YR2j53OEYiyxzVP">三角色：管理员 / 教师 / 学生</td>
+                  <td data-page-node-id="W6I15KewTHW6eOH7BB5Kn6">管理员跨班运维方便。</td>
+                  <td data-page-node-id="HEIVSfj4BGJ1UDRXlkKtvK">本迭代不做，推迟到后续迭代：超级管理员天然跨班，会与“跨班返回 404”的隔离验收直接冲突。隔离验收通过后再单独设计它的越权路径与操作审计。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="4qQrPM9Hyq3S7tjhVP84x3">本步要核对</h3>
+            <table class="check-table" data-page-node-id="hqguu8PlCTK0W25G1r6lqk">
+              <thead data-page-node-id="AAtdJVgb3G37qnGEDNNaOh">
+                <tr data-page-node-id="Klq7o0A5c3mEmyO9U57mEZ">
+                  <th data-page-node-id="A7blEAgfYTEpsdml5EnqBU">核对项</th>
+                  <th data-page-node-id="CwexmAvospm0gGGHLIV47t">本迭代应采用</th>
+                  <th data-page-node-id="q7zhRgZWHlBBc54TkuLADU">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="DPe0kVbEuQbrmPK3nXbrB2">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="vzwyLNjRS8u5pchUXVy4ln">
+                <tr data-page-node-id="3QYgQhvvJNf7hMg7SK3BGC">
+                  <td data-page-node-id="YUGHIZHsemPEcEFDNYc4JC">角色与能力边界是否逐条写成可判定的要求？</td>
+                  <td data-page-node-id="r4lyrQ2nHfdzek9CueRSCU">教师＝上传/查看/下载；学生＝查看/下载。多给一项能力就多一个垂直越权面。</td>
+                  <td data-page-node-id="CRRYEUxqN3CCHApb26hNqZ">
+                    <b data-page-node-id="61rb4GmiEjWE09RshM2tw6">规约</b>：Requirement 中每个角色各有哪些 Scenario<br data-page-node-id="s0CmufSdYD6oBqcNmrFv0Y"/><b data-page-node-id="z6L9VMRBGn0cZtDv9sQOp3">代码</b>：搜角色常量与权限判断分支，看学生分支是否出现写操作<br data-page-node-id="k2WA5rAEKADDOB5rUkA0pN"/><b data-page-node-id="AqTBzcx2fmY5IvU5dWt5mR">运行</b>：分别用教师与学生账号各试一次上传
+                  </td>
+                  <td class="tick" data-page-node-id="jCXCRo22JyACoM5gQZezMs">
+                    <span class="cb" data-page-node-id="CFadzzXEVGCWnp8gMNhCxr"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="XjvGnFEo22yl6Frxclf5bJ">动手要做</h3>
+            <ul data-page-node-id="E4jUqTwrKUhTTIiYL7rKjD">
+              <li data-page-node-id="kWpT88GdfxsYivPa2MEexH">账号密码登录；角色只有教师与学生。</li>
+              <li data-page-node-id="WjB55q83M1LXltrF77EfOG">教师可上传、查看、下载本班材料；学生只能查看和下载。</li>
+              <li data-page-node-id="xpSkcs8frayIFfRBPzJjnj"><b data-page-node-id="HNnqFSRQjgVmF9fHWuGqhP">身份、角色、班级由服务端会话识别，不信任客户端自行声明。</b></li>
+            </ul>
+          </section>
+          <section class="unit" id="u2" data-page-node-id="Oxk5AMLDyZMe6vQYCm4LLH">
+            <h2 class="unit-h" data-page-node-id="9qOPfdfYlcn9PVhsnysWdG">
+              <span class="unit-n" data-page-node-id="EUgGHSrlAOoWT2tNvXeIix">2</span><span class="unit-t" data-page-node-id="ogroiNX7bwBtWEh7GhoIrv">班级：数据边界从哪里来</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="B8WAIvYooKmIGEgV6ZILHE">每个用户属于固定班级，班级取自服务端会话，不能由请求参数决定。</p>
+            <h3 class="unit-sub" data-page-node-id="389dLte2MACb5YEZhB0pnj">知识点</h3>
+            <article class="kp-card" data-page-node-id="WLQk8Y275fUZIL26yHZUay">
+              <h3 data-page-node-id="0jqVBDAgrpXPxVjCyBZvMW">班级是租户边界</h3>
+              <p data-page-node-id="pRKDCKrdEESxz7lqwFFKPu">在同一个数据库实例中用 class_id 划分班级数据边界。用户属于固定班级，不能通过请求参数切换班级。<b data-page-node-id="IToiTN77VBn8Tp5wEq5Elg">这是多租户数据隔离，不是前端菜单过滤。</b></p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="rbRgFEgXq5E4h8YhoA9FDP">其他可行方案与选择依据</h3>
+            <table data-page-node-id="OsWz5Y2mUBslE3pMmwhoxF">
+              <thead data-page-node-id="FKOqCyyoPjgLnaMiX7UXmE">
+                <tr data-page-node-id="mDvOMA26zj36L78O9H8S0O">
+                  <th data-page-node-id="baRhRjxZfgdVsGCy48fInP">方案</th>
+                  <th data-page-node-id="q9TrVkFYNu78t64xjmfFtj">要点</th>
+                  <th data-page-node-id="yGnFXg3BgnvjN4Syc7EeQZ">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="Vw1E7YLXZHFBxtqaSEDPcw">
+                <tr data-page-node-id="0A8o6fUH1ZJZ837ZCaH2Qk">
+                  <td data-page-node-id="zftFbcmPTPB28HKkk43atW">以学校或课程为租户</td>
+                  <td data-page-node-id="8Aht1XQrqdQCnfBEuX0vxE">更接近最终产品。</td>
+                  <td data-page-node-id="ioUxaDfYXrsvhNrpPMjYVH">本课租户是班级，边界清晰，种子两班即可验收。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="lGtl2CNAFjHyUknEjrGcZ2">本步要核对</h3>
+            <table class="check-table" data-page-node-id="FSa0hvhORbIvveEMfKbkI6">
+              <thead data-page-node-id="rF7fxBwwNxHNeOnT9KXUBO">
+                <tr data-page-node-id="7k63wWuzDlqV0PqhDATaGF">
+                  <th data-page-node-id="DDb7GPevbrIoPRfMXgHcEl">核对项</th>
+                  <th data-page-node-id="wBo6lPytdn8rlnZWX1ECuB">本迭代应采用</th>
+                  <th data-page-node-id="O9Z3O5WBe8p0L5yTiJpf87">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="xxAcfdhH690sbZt8GOdSDG">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="hv3CTsAjwlrsTy86P9vAaZ">
+                <tr data-page-node-id="6rhQK4WYopQoRHNnGW5vM7">
+                  <td data-page-node-id="uXNOzHsxdMcP4mUMCEBBMb">班级边界是写进规约，还是只写在 design 里？</td>
+                  <td data-page-node-id="yJuzDUgx8AOHw7PA4GHu5h">必须作为 Requirement 的 Scenario 出现，隔离失败才有判定依据。</td>
+                  <td data-page-node-id="oZQ0lZsnYqzItOaE75RgAR">
+                    <b data-page-node-id="oZBpZgpyetCQMl2h0wcXdX">规约</b>：跨班访问是否写成可判定的 Scenario<br data-page-node-id="3WlEdvqtcvzhMjXEDROmEd"/><b data-page-node-id="fusCrXuGg2VdZPGk3JuD5P">代码</b>：对比 spec.md 与 design.md 中关于 class 的描述层级<br data-page-node-id="HOOXddQPsGagrWQ5Ezrg5q"/><b data-page-node-id="KzTjQ4OGhEbvR9rsfqzdi1">运行</b>：按 Scenario 逐条跑失败路径，看是否都能判通过与否
+                  </td>
+                  <td class="tick" data-page-node-id="sax4hEaHKoYh797BIGyxRr">
+                    <span class="cb" data-page-node-id="hOWzLsm0zEJezOxeHvbA6B"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="xAcGkjD6upOj4iL5ZNr10U">动手要做</h3>
+            <ul data-page-node-id="5DL5KgdLPlo1pvZXLnMf3U">
+              <li data-page-node-id="SSOAaW1DA5juIy2FGlq2DE">每个用户属于一个固定班级。</li>
+              <li data-page-node-id="XQFHmIMcSaFl2QX1f7FtMv">只能访问自己班级的材料；跨班由服务端拒绝。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u3" data-page-node-id="KioCsXl0yEsnlQGIqMf5UJ">
+            <h2 class="unit-h" data-page-node-id="e1wMmnF9QlItEsMlwwUJJL">
+              <span class="unit-n" data-page-node-id="dxQSiJDiXz7XT5vefCzrvD">3</span><span class="unit-t" data-page-node-id="F1LBiaO7aCwxu9sYQ5VEjh">材料与知识库：本迭代做到哪一步</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="II9p45SNNe6mEULHHTIujV">材料上传、提取正文、本班可查；知识库本课只负责存正文，不做问答。</p>
+            <h3 class="unit-sub" data-page-node-id="Do86lwlZCIj2tx45FkQCfo">知识点</h3>
+            <article class="kp-card" data-page-node-id="xb4vOdTkZUYgIySVaWVGGm">
+              <h3 data-page-node-id="0n8BmTR0NTYVUOhOvkmCSV">知识库本课只负责存</h3>
+              <p data-page-node-id="pOzxTnXF7a0N5mVrYJbfMh">上传后提取正文写入可查询的数据行，为后续检索预置数据。本班列表搜索可以做；向量检索、问答与 RAG（Retrieval-Augmented Generation，检索增强生成）不是本迭代的范围。</p>
+            </article>
+            <h3 class="unit-sub" data-page-node-id="DHjHnjHZ1r8x5WOuJM2big">其他可行方案与选择依据</h3>
+            <table data-page-node-id="A8NBTLc4CxXnziL3WqvdKl">
+              <thead data-page-node-id="pTcvbrHp6Xnn0m5Utc8dgh">
+                <tr data-page-node-id="d6I0xGCB72d9Ae9LRmIpxH">
+                  <th data-page-node-id="HtEGfHJ5azjuJCkXjCJLwP">方案</th>
+                  <th data-page-node-id="xaFAee7DhaEgNRDjTjk21O">要点</th>
+                  <th data-page-node-id="m8ob2t36HI1WaVwM9GFyvF">本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="SntcEgBvHfx2O6IqxCtRFp">
+                <tr data-page-node-id="NfGMk4fHWMYo6seDfgynXh">
+                  <td data-page-node-id="2KloIqioupQEAuiV6tweDY">本课直接做 RAG / 问答</td>
+                  <td data-page-node-id="3rYwtbBLrwBBjFtmW6Z9Ua">演示效果强。</td>
+                  <td data-page-node-id="4MM8zZID2WkwyX9U9ZQlJa">否决。没有可靠的入库与隔离，检索会造成跨班数据泄露。本迭代的知识库只负责存储正文。</td>
+                </tr>
+                <tr data-page-node-id="A2l56pAcurwE3C4UXFxAjU">
+                  <td data-page-node-id="EiyDo9jbkmD0PH3ubxaj7n">列表硬编码演示数据</td>
+                  <td data-page-node-id="53DdPjn43VEXWnvRTJeFNq">前端实现最快。</td>
+                  <td data-page-node-id="02cbiGT1E85OfSabp8e9yW">否决。必须从数据库查询，否则上传与隔离无法验收。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="nnCS6aPlviZ5zIObyI4loj">本步要核对</h3>
+            <table class="check-table" data-page-node-id="bmV8oPlUwbgsLOfIYGZEUG">
+              <thead data-page-node-id="pLJI96opeARCveoKvnexUD">
+                <tr data-page-node-id="PjSmNmnO1n13r26bfqR99b">
+                  <th data-page-node-id="Zx7kqUEv0WaNfTW4Cf456p">核对项</th>
+                  <th data-page-node-id="cwuyJAfQqRkUnu2Jt6TgaA">本迭代应采用</th>
+                  <th data-page-node-id="w1qs5QqwZ6Tf8uJWalnZly">怎么查（规约 / 代码 / 运行）</th>
+                  <th data-page-node-id="CFNFWVMePDWP51QCm9hHlw">自检</th>
+                </tr>
+              </thead>
+              <tbody data-page-node-id="mkLqLpa0OKdC88mapk1eEC">
+                <tr data-page-node-id="gSoUvCNGRFNERxX8a4HPcX">
+                  <td data-page-node-id="BSYFAbGI5jgw8ggSEJp9nf">Non-goals 是否写明检索、问答、作业不做？</td>
+                  <td data-page-node-id="ndZXvINbdWJCGQzqlALrM1">必须写明。缺失时 Harness 最容易越界生成整块功能。</td>
+                  <td data-page-node-id="deAzFVihzznWJqgSiNUqeg">
+                    <b data-page-node-id="l6r3aZl6MDmLwvNH2gd5pZ">规约</b>：proposal.md 的 Non-goals（明确不做项）章节<br data-page-node-id="cOqccuWyCAwGtNoUXvXOp3"/><b data-page-node-id="1hbEYTwRNY8v57OYP2KmsY">代码</b>：搜依赖清单与路由，看有无向量库、对话接口<br data-page-node-id="PGjOOXJRJ0K9GkFmhqE2sC"/><b data-page-node-id="EkpqI6Gv3koPGKgqMDKdFw">运行</b>：让 Harness 复述范围，观察是否夹带不做项
+                  </td>
+                  <td class="tick" data-page-node-id="7EEmouxjvlHB2frCvOPz6C">
+                    <span class="cb" data-page-node-id="nITtnfINIm0mYpiGwwFeCH"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="ZVqrkgCPNryL8fH1CPax07">
+                  <td data-page-node-id="XVDaCTRUdxqZINYb231RNR">列表与搜索的数据来源是否写明？</td>
+                  <td data-page-node-id="ZITUB2msjD3v4XHZO0DF3A">必须来自按班级过滤的数据库查询，不得硬编码演示条目。</td>
+                  <td data-page-node-id="zYmPq9HuVmj9u53O0V95TY">
+                    <b data-page-node-id="wZL7y23nfMG4y3Vmwv5HiC">规约</b>：列表中是否写明数据来源与过滤条件<br data-page-node-id="2pNVEwH6YQkseTVFfE5gcj"/><b data-page-node-id="z61MBpqd0uC2aipuvQ8ZdH">代码</b>：搜列表 handler，看查询语句是否带 class_id<br data-page-node-id="CGzwkpk3HJABn6D4ENt0kc"/><b data-page-node-id="i6GhzUjpjz9lnOjeQ9ir9V">运行</b>：清空材料表后刷新列表，应无任何条目
+                  </td>
+                  <td class="tick" data-page-node-id="BNI3iJBa1l8eeRmpMQHKAr">
+                    <span class="cb" data-page-node-id="tLBr42SgTGMgbQgLVvVy5c"></span>
+                  </td>
+                </tr>
+                <tr data-page-node-id="5yyVnBKgocsRFb1ocvjD3R">
+                  <td data-page-node-id="M2bZw6lvhhYpyBrON6XL5T">上传校验与失败状态是否可判定？</td>
+                  <td data-page-node-id="i9zmkAjXWG09fFo3vWZK08">扩展名、大小、内容三类失败各有明确状态码，且数据库与磁盘无残留。</td>
+                  <td data-page-node-id="2M7XFOopslZFc6ghZrFFrQ">
+                    <b data-page-node-id="t5uVHsBXXlv156oj2H8wze">规约</b>：是否有对应 Scenario 与预期状态码<br data-page-node-id="a1V3B73JR2vBBtm6Uf7ftP"/><b data-page-node-id="cIiuxrHai3v15Y4Lk4vXs0">代码</b>：搜校验分支与错误返回位置<br data-page-node-id="yvpy13oRIsLjXro2rAYilq"/><b data-page-node-id="gQbG2nY0171KuLPoKvGtnP">运行</b>：分别上传 .exe、超限文件、非法编码文件各一次
+                  </td>
+                  <td class="tick" data-page-node-id="unfGcrGhDSRyb5Bzr1nqnV">
+                    <span class="cb" data-page-node-id="qbySFTHwOwJLvhVbrYkQDF"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub" data-page-node-id="gaDBKk2nnMKFCgDf4EjxHM">动手要做</h3>
+            <p class="unit-lead" data-page-node-id="r6EJr3j3BgTEsOYwhRaAmF"><b data-page-node-id="uKpClfbGV4Igt27vS29FL7">规约必做（演示 change：<code data-page-node-id="zsdvplSaq9s0AjxIGYD71K">specs/auth-upload/spec.md</code> R4–R5、R9、R10）：</b></p>
+            <ul data-page-node-id="QF7e3agBMEcfCs8ByOH0eV">
+              <li data-page-node-id="vALX3cyoUqp2qe21uHWOlr">教师上传 <code data-page-node-id="hwUrkZlWdxxXoALpIAGSku">.txt</code> / <code data-page-node-id="r6DnUMF1NlhUfie1PxTesm">.md</code>；解析正文并在同事务内写入 <code data-page-node-id="3uUBF2FtGyoGirMXBgGO5o">materials</code> 与 <code data-page-node-id="NvRzzBmpmREhcyvz0UwxPe">knowledge_entries</code>（R4）。</li>
+              <li data-page-node-id="LDQeu2nQTH94MlBmJtqIWQ">本班列表由数据库按会话班级过滤；详情与文件经鉴权 API（R3、R5、R9.4），不得静态暴露 <code data-page-node-id="5rhGNl22kBg1SKlSSC7F8H">/uploads</code>。</li>
+              <li data-page-node-id="nSin6xYV7qNQ0GebWmnyIK">上传须校验扩展名与大小上限；解析/入库失败时两表与磁盘均无残留（R4.4–R4.7）。</li>
+              <li data-page-node-id="v1pZuV1mGZHxRrsV6jMs09">Web：登录页 + 材料页；<code data-page-node-id="wYJpFEGHeiqRCotMY6CqFC">/api/me</code>、401 回登录、正文安全（R9）；北大红品牌、深浅色、列表/网格、本班搜索、命令面板、上传进度、toast、Markdown GFM（R10）。</li>
+            </ul>
+            <p class="unit-lead" data-page-node-id="IOxvPfZIgltV0ugUEaG6Zl"><b data-page-node-id="Sgmh5fWCfSxGhyi2elV4m9">明确不做（<code data-page-node-id="BGejHVbqR2KXEpATfGVw4y">proposal.md</code> Non-goals，写了也不能当必做验收）：</b></p>
+            <ul data-page-node-id="HH0pjKi7zohLloPWZlh6jC">
+              <li data-page-node-id="SsvZYNLZOa7S8SLCCUQHV9">跨班检索、向量检索、RAG 问答（本班前端筛选不算跨班检索）。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u4" data-page-node-id="zB78YNb3FH7a5caVYzcXsE">
+            <h2 class="unit-h" data-page-node-id="hfoIcYLLCaZcN2MaBjvgLa">
+              <span class="unit-n" data-page-node-id="YjG59IOTdhXNauTg2QxYCb">4</span><span class="unit-t" data-page-node-id="MGAUFhapmdfEeswT9HHUBA">页面体验：可选增强，不能替代鉴权</span>
+            </h2>
+            <p class="unit-lead" data-page-node-id="VS5AhBSRRVgr0Xi3aDm7hK">体验可以写进规约并逐条验收，但<strong data-page-node-id="SgCi2qwsdRyf0sFed6udoT">不能替代</strong>服务端 RBAC 与班级隔离；未写入规约的体验条目不必做。</p>
+            <h3 class="unit-sub" data-page-node-id="bEuealWvzPhFumLufBgqeW">动手要做（可选，先写进规约再做）</h3>
+            <ul data-page-node-id="eXMKtP1GMsHh2iEYbeWFID">
+              <li data-page-node-id="BT5MDqF1pbq0V3ywsNbLIc">操作结果用通知或页内错误提示反馈（登录失败须统一文案，R1.2）。</li>
+              <li data-page-node-id="mQS5VUjCrsrCH7fZDZsAVN">其余视觉与交互（北大红、深浅色、双视图、命令面板、移动端适配等）按本人产品规约取舍。</li>
+            </ul>
+            <div class="note" data-page-node-id="msN2mB8VpHWu8CSMYNU2GP">
+              列表数据必须来自数据库查询，不要硬编码演示条目。前端「搜索」若实现，只能在本班已加载/已查询的数据范围内过滤，不是第 4 课的全文检索。
+            </div>
+          </section>
+          <p class="note" data-page-node-id="N32r7xZgnembVdqMAWH2th">把否决理由用自己的话写进 design / 迭代说明；原文照录本表不算 ADR。</p>
+          <div class="think" data-page-node-id="ppXoUpITDiGX3d9WJVAz7c">
+            <h2 data-page-node-id="PXpB0z3NdslZjHiGP9A3C5">想一想：判断与取舍</h2>
+            <p data-page-node-id="v5yTziUm7DcOpXctd5nApC"><b data-page-node-id="apGdXAWF2oP1oeYqJIY0ug">先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul data-page-node-id="FzFX0VFOoAzhpQUn2cqGdV">
+              <li data-page-node-id="CCJwk7932onsKLRbvZF7Sg">教师上传后本班学生可见，这是授权问题还是列表查询来源问题？缺其一，后续检索会在哪一环节失效？</li>
+              <li data-page-node-id="sd52V7Ir4gaFkXCiYqFsSV">Non-goals（明确不做项）是否写明检索、对话、作业不做？缺失时最容易额外生成哪些越界功能？</li>
+            </ul>
+          </div>
+          <div class="pager" data-page-node-id="jxeAVGRQ4wkoLgrDEF9IRf">
+            <a class="btn btn-ghost" href="../index.html" data-page-node-id="AirjNc62HqlzilSXK6nPQL">← 概览</a><a class="btn btn-ghost" href="architecture.html" data-page-node-id="OlU0aZeocdXXxVYuHCF7ty">系统怎么走 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

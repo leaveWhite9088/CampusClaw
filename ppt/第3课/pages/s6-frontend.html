@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8"/> <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>6 前端页面 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css"/>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="../index.html">CampusClaw<span>第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航">
+          <p class="nav-label">本课</p>
+          <a href="../index.html">概览</a> <a href="scope.html">要做成什么样</a> <a href="architecture.html">系统怎么走</a> <a href="security.html">安全与部署</a> <a href="auth-schemes.html">认证方案对照</a>
+          <p class="nav-label">实现步骤</p>
+          <a href="roadmap.html">路线图</a> <a href="s1-skeleton.html">1 骨架与配置</a> <a href="s2-data.html">2 数据与种子</a> <a href="s3-auth.html">3 登录与会话</a> <a href="s4-isolation.html">4 班级隔离</a> <a href="s5-upload.html">5 上传入库</a> <a href="s6-frontend.html" class="active">6 前端页面</a> <a href="s7-compose.html">7 Compose</a> <a href="s8-verify.html">8 验收</a>
+          <p class="nav-label">核对</p>
+          <a href="checklist.html">核对总表</a>
+          <p class="nav-label">发布</p>
+          <a href="design.html">设计决策</a> <a href="apply.html">按规约实现</a> <a href="ship.html">提交清单</a> <a href="nongoals.html">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <button class="menu-btn" type="button" id="menuBtn">菜单</button>
+          <div class="crumb">
+            实现步骤 / 6
+          </div>
+          <div class="badge">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content">
+          <h1>6 前端页面</h1>
+          <p class="lead">演示 change 的前端以 delta spec <strong>R9 + R10</strong> 为准：行为与安全见 R9；品牌色、主题、双视图、本班搜索、命令面板、上传进度、toast 与 Markdown 见 R10。本页三个步骤与 tasks §7（含 7.8–7.16）一一对应。</p>
+          <div class="note howto">
+            每步按同一顺序展开：<b>知识点</b> → <b>其他可行方案与选择依据</b> → <b>本步要核对</b> → <b>动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html">实现方案核对总表</a>。
+          </div>
+          <nav class="steps">
+            <p class="steps-h">本页步骤</p>
+            <a href="#u1"><span class="steps-n">1</span><span class="steps-t">路由与身份恢复</span></a><a href="#u2"><span class="steps-n">2</span><span class="steps-t">界面不承担访问控制</span></a><a href="#u3"><span class="steps-n">3</span><span class="steps-t">材料页：展示、搜索与体验</span></a>
+          </nav>
+          <section class="unit" id="u1">
+            <h2 class="unit-h">
+              <span class="unit-n">1</span><span class="unit-t">路由与身份恢复</span>
+            </h2>
+            <p class="unit-lead"><b>刷新页面后本地状态清空，身份一律以 /api/me 为准。</b></p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>身份以 /api/me 为准</h3>
+              <p>刷新页面后本地内存清空。用服务端会话换回角色与班级。<b>localStorage 中的 role 可被修改，不能作为授权依据。</b></p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>前端本地硬编码 role 切换器</td>
+                  <td>方便演示越权。</td>
+                  <td>否决。角色只来自 /api/me。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>刷新页面后如何恢复身份？</td>
+                  <td>用 /api/me 重新确认会话；本地内存清空不作为依据。</td>
+                  <td>
+                    <b>规约</b>：是否写明刷新后的身份恢复方式<br/><b>代码</b>：看应用初始化逻辑<br/><b>运行</b>：刷新页面与重开标签页各试一次
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>登录页提交 <code>/api/login</code>；失败只显示统一错误，用通知或页内提示反馈。</li>
+              <li>刷新时用 <code>GET /api/me</code> 确认会话；有效则进入材料页，无效则回登录页。</li>
+              <li>收到 401 时清空状态并返回登录页。登出调用 <code>/api/logout</code>。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u2">
+            <h2 class="unit-h">
+              <span class="unit-n">2</span><span class="unit-t">界面不承担访问控制</span>
+            </h2>
+            <p class="unit-lead">不渲染入口只降低误操作概率；绕过界面仍必须失败，401 / 403 / 404 的界面处理要与服务端语义一致。</p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>界面不是访问控制</h3>
+              <p>不渲染上传按钮、不提供其他班级的链接，只降低误操作概率。攻击者可以直接用 curl 携带 Cookie 调用接口。<b>验收必须包含绕过界面的失败路径。</b></p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>服务端渲染（模板或 Next.js SSR，Server-Side Rendering）</td>
+                  <td>首屏渲染快，利于 SEO。</td>
+                  <td>可行。当前需求是 Vite SPA + 同源 /api。不要为 SSR 把会话逻辑只放前端。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>上传入口依据什么显示？</td>
+                  <td>依据 /api/me 返回的角色，不依据本地存储中的角色。</td>
+                  <td>
+                    <b>规约</b>：是否写明身份来源<br/><b>代码</b>：搜 localStorage 中是否存有 role<br/><b>运行</b>：手工改本地存储的 role，看入口是否变化
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>401 / 403 / 404 的界面处理是否与服务端语义一致？</td>
+                  <td>401 清状态回登录页；403 与 404 按服务端语义提示，不改变语义。</td>
+                  <td>
+                    <b>规约</b>：是否写明前端对失败状态的处理<br/><b>代码</b>：搜前端错误分支<br/><b>运行</b>：分别触发三种响应，观察界面反馈
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>材料列表请求 <code>/api/materials</code>；详情与下载走鉴权接口。</li>
+              <li>上传入口是否显示，取决于 <code>/api/me</code> 返回的角色。学生界面不提供上传；绕过界面仍须返回 403。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u3">
+            <h2 class="unit-h">
+              <span class="unit-n">3</span><span class="unit-t">材料页：展示、搜索与体验</span>
+            </h2>
+            <p class="unit-lead">格式化展示不等于把原文当 HTML 注入；搜索只在本班材料范围内，不是跨班全文检索。</p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>Markdown 展示的风险</h3>
+              <p><b>渲染时使用 Markdown 库的默认转义策略，不执行材料中的脚本。</b><b>搜索只在本班数据范围内过滤，不是跨班级全文检索。</b></p>
+            </article>
+            <article class="kp-card">
+              <h3>体验与安全分层</h3>
+              <p>深浅色、网格视图、命令面板、进度条服务于可用性。它们不改变 401 / 403 / 404 的语义。</p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Tailwind CSS / 组件库（如 Ant Design、Element Plus）</td>
+                  <td>开发效率高。</td>
+                  <td>可行。需求写的是原生 CSS 设计系统；换成 UI 库须在规约中说明，且不能替代鉴权。</td>
+                </tr>
+                <tr>
+                  <td>Markdown 转 HTML 后存库</td>
+                  <td>读取详情更快。</td>
+                  <td>本课存原文、读时渲染，避免入库时注入。渲染须转义。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Markdown 渲染是否转义？</td>
+                  <td>使用库的默认转义策略，不执行材料中的脚本。</td>
+                  <td>
+                    <b>规约</b>：是否写明渲染安全要求<br/><b>代码</b>：搜直接注入 HTML 的用法<br/><b>运行</b>：上传含 script 标签的 .md，观察是否被执行
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>搜索范围是否限于本班？</td>
+                  <td>本班材料范围内筛选标题或正文，不是跨班全文检索。</td>
+                  <td>
+                    <b>规约</b>：是否写明搜索范围<br/><b>代码</b>：看搜索请求携带的参数<br/><b>运行</b>：用 B 班材料标题在 A 班搜索，应无结果
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <p class="unit-lead"><b>与 R9 + R10 + tasks §7 一致（必做）：</b></p>
+            <ul>
+              <li>列表 <code>/api/materials</code>（R9.2）；401 清状态回登录（R9.5）。</li>
+              <li>上传入口仅 teacher，依据 <code>/api/me</code>（R9.3、R2.5）；XHR 上传进度（R10.7、tasks 7.13）。</li>
+              <li>详情 <code>/api/materials/{id}</code>；下载 <code>.../file</code>（R9.4）；<code>.md</code> 用 GFM（R10.9）。</li>
+              <li>本班搜索、列表/网格、⌘/Ctrl+K 命令面板、深浅色主题、toast、响应式（R10、tasks 7.8–7.16）。</li>
+            </ul>
+          </section>
+          <p class="note">把否决理由用自己的话写进 design / 迭代说明；原文照录本表不算 ADR。</p>
+          <section class="unit" id="ask">
+            <h2 class="unit-h"><span class="unit-t">向 Harness 核对的参考提问</span></h2>
+            <div class="ask">
+              <p class="ask-h">可直接复制到会话中使用。要求它逐项给出证据（文件与行号、命令与输出），找不到就明说、不许推测；回答只作线索，勾选前仍须亲自运行 verify 复核。</p>
+              <ol>
+                <li>刷新页面后身份如何恢复？找到调用身份接口的代码；是否存在把角色缓存在 localStorage 并直接采信的逻辑？</li>
+                <li>上传入口的显示依据是什么？绕过界面直接调用上传接口时服务端行为是什么？据此说明隐藏按钮为什么不算权限控制。</li>
+                <li>Markdown 渲染使用什么库、默认是否转义 HTML？用一段含 &lt;script&gt; 的材料内容实测渲染结果并贴出。</li>
+                <li>401、403、404 三种响应在前端分别呈现什么？逐一核对与服务端语义是否一致。</li>
+              </ol>
+            </div>
+          </section>
+          <div class="think">
+            <h2>想一想：判断与取舍</h2>
+            <p><b>先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul>
+              <li>页面不渲染上传入口，能否单独作为验收依据？规约如何表述？</li>
+            </ul>
+          </div>
+          <div class="pager">
+            <a class="btn btn-ghost" href="s5-upload.html">← 5 上传入库</a><a class="btn btn-ghost" href="s7-compose.html">7 Compose →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

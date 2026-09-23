@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8"/> <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>提交清单 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css"/>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="../index.html">CampusClaw<span>第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航">
+          <p class="nav-label">本课</p>
+          <a href="../index.html">概览</a> <a href="scope.html">要做成什么样</a> <a href="architecture.html">系统怎么走</a> <a href="security.html">安全与部署</a> <a href="auth-schemes.html">认证方案对照</a>
+          <p class="nav-label">实现步骤</p>
+          <a href="roadmap.html">路线图</a> <a href="s1-skeleton.html">1 骨架与配置</a> <a href="s2-data.html">2 数据与种子</a> <a href="s3-auth.html">3 登录与会话</a> <a href="s4-isolation.html">4 班级隔离</a> <a href="s5-upload.html">5 上传入库</a> <a href="s6-frontend.html">6 前端页面</a> <a href="s7-compose.html">7 Compose</a> <a href="s8-verify.html">8 验收</a>
+          <p class="nav-label">核对</p>
+          <a href="checklist.html">核对总表</a>
+          <p class="nav-label">发布</p>
+          <a href="design.html">设计决策</a> <a href="apply.html">按规约实现</a> <a href="ship.html" class="active">提交清单</a> <a href="nongoals.html">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <button class="menu-btn" type="button" id="menuBtn">菜单</button>
+          <div class="crumb">
+            发布 / 提交
+          </div>
+          <div class="badge">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content">
+          <h1>提交清单</h1>
+          <p class="lead">全部条件同时满足，才算完成迭代 1 的交付。</p>
+          <div class="note howto">
+            每步按同一顺序展开：<b>知识点</b> → <b>其他可行方案与选择依据</b> → <b>本步要核对</b> → <b>动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html">实现方案核对总表</a>。
+          </div>
+          <nav class="steps">
+            <p class="steps-h">本页步骤</p>
+            <a href="#u1"><span class="steps-n">1</span><span class="steps-t">可复现才算交付</span></a><a href="#u2"><span class="steps-n">2</span><span class="steps-t">版本与决策记录</span></a><a href="#u3"><span class="steps-n">3</span><span class="steps-t">同伴交叉验证</span></a><a href="#u4"><span class="steps-n">4</span><span class="steps-t">Archive：把 delta 合并成基线</span></a>
+          </nav>
+          <section class="unit" id="u1">
+            <h2 class="unit-h">
+              <span class="unit-n">1</span><span class="unit-t">可复现才算交付</span>
+            </h2>
+            <p class="unit-lead"><b>第三方按 README 能启动、失败路径有证据、仓库无真实密钥，三者同时满足才算完成。</b></p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>完成定义（Definition of Done）</h3>
+              <p>功能实现完成不等于发布。第三方按 README 能够启动、失败路径有证据、三项 ADR 写清，才算完成本课。</p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>只交本机演示、无 Compose</td>
+                  <td>课堂上可演示。</td>
+                  <td>否决。<b>第三方按 README 无法启动就不算发布。</b></td>
+                </tr>
+                <tr>
+                  <td>第 10 课才做的公网域名 / HTTPS</td>
+                  <td>更接近正式上线。</td>
+                  <td>本课不做。本地 Compose 即为发布形态。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>第三方从零按 README 能否启动？</td>
+                  <td>能，不依赖演示者本机环境。</td>
+                  <td>
+                    <b>规约</b>：是否有第三方复现要求<br/><b>代码</b>：看 README 步骤是否完整<br/><b>运行</b>：在干净目录或同伴机器按 README 复现
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>仓库无真实密钥、.env.example 已提交、口令为哈希？</td>
+                  <td>三项同时满足。</td>
+                  <td>
+                    <b>规约</b>：是否有密钥与口令要求<br/><b>代码</b>：看入库文件清单，并查库看口令字段<br/><b>运行</b>：克隆仓库全局搜密钥；查库看口令形态
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>README 是否写明范围、不做项、单实例、跨班返回码？</td>
+                  <td>四项齐全。</td>
+                  <td>
+                    <b>规约</b>：是否有 README 内容要求<br/><b>代码</b>：逐项对照 README 章节<br/><b>运行</b>：让别人只读 README 回答这四个问题
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>按 README 从零执行 Compose 启动，能打开登录页。</li>
+              <li>未登录访问 <code>/health</code> 返回 200。</li>
+              <li>仓库无真实密钥；<code>.env.example</code> 已提交；口令为哈希存储。</li>
+              <li>README 写明范围、不做项、单实例部署、跨班返回码。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u2">
+            <h2 class="unit-h">
+              <span class="unit-n">2</span><span class="unit-t">版本与决策记录</span>
+            </h2>
+            <p class="unit-lead">打版本 tag、写迭代说明，让这一版能被定位与回溯。</p>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>不打 tag、不写 ADR</td>
+                  <td>少一步操作。</td>
+                  <td>否决。建议 tag v0.1.0-auth-upload；三项决策空缺不予认定成功。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>是否打了版本 tag？</td>
+                  <td>建议 v0.1.0-auth-upload，便于下一迭代接着做。</td>
+                  <td>
+                    <b>规约</b>：是否有版本要求<br/><b>代码</b>：git tag 查看<br/><b>运行</b>：从 tag 检出后能否启动
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>迭代说明写清设计决策。建议打 tag <code>v0.1.0-auth-upload</code>。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u3">
+            <h2 class="unit-h">
+              <span class="unit-n">3</span><span class="unit-t">同伴交叉验证</span>
+            </h2>
+            <p class="unit-lead">用对方的仓库与预置账号试一条跨班 URL，据此区分规约缺陷与实现缺陷。</p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>同伴交叉验证</h3>
+              <p>在对方的仓库与账号环境里实测跨班 URL。<b>若被绕过，先检查规约中有无明文约定，再修改实现：区分规约缺陷与实现缺陷。</b></p>
+            </article>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>同伴交叉验证是否做过？</td>
+                  <td>做过，并记录结论：被绕过时区分规约缺陷与实现缺陷。</td>
+                  <td>
+                    <b>规约</b>：是否有互验要求<br/><b>代码</b>：看互验记录<br/><b>运行</b>：请同伴试一条跨班 URL
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>教师上传后本班列表查询数据库可见新增条目；学生可查看、可下载、不可上传。</li>
+              <li>三条失败路径至少两条有证据。</li>
+              <li>仓库地址提交至作业回收系统。请同伴试一条跨班 URL。</li>
+            </ul>
+          </section>
+          <section class="unit" id="u4">
+            <h2 class="unit-h">
+              <span class="unit-n">4</span><span class="unit-t">Archive：把 delta 合并成基线</span>
+            </h2>
+            <p class="unit-lead"><b>归档对应 OpenSpec 的第五步：change 移入归档目录，delta 并入主力规约，成为下一次迭代的起点。</b></p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>归档把「这次改了什么」并入基线</h3>
+              <p>归档做两件事：把 change 目录移入 <code>openspec/changes/archive/</code>，目录名前加归档日期；再把 delta 与主力规约逐条比对，合并进 <code>openspec/specs/&lt;capability&gt;/spec.md</code>。</p>
+              <p>合并之后，主力规约里才第一次出现本能力的要求。此后的迭代从这份 <code>specs/</code> 出发——第 4 课的检索增量会在它之上开新 change，而不是从散落的代码或对话里重新生长。</p>
+              <p>所以归档不是形式动作：不归档，<code>openspec/specs/</code> 永远是空的，下一次变更就没有可继承的基线。</p>
+            </article>
+            <h3 class="unit-sub">归档前后对照</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>位置</th>
+                  <th>归档前</th>
+                  <th>归档后</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <code>openspec/changes/&lt;change&gt;/</code>
+                  </td>
+                  <td>四件套在此，是活动变更</td>
+                  <td>已移走，活动变更清零</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>openspec/changes/archive/</code>
+                  </td>
+                  <td>只有占位文件</td>
+                  <td>出现 <code>YYYY-MM-DD-&lt;change&gt;/</code>，内含原来的四件套</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>openspec/specs/&lt;capability&gt;/spec.md</code>
+                  </td>
+                  <td>不存在（主力规约还是空的）</td>
+                  <td>已生成，含本能力的 Requirement 与 Scenario</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>活动变更是否已清零？</td>
+                  <td>是：<code>openspec list</code> 里不再出现本 change。</td>
+                  <td>
+                    <b>规约</b>：是否写明归档要求<br/><b>代码</b>：看 <code>changes/</code> 与 <code>changes/archive/</code><br/><b>运行</b>：<code>openspec list</code>
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>主力规约里是否已出现本能力？</td>
+                  <td>已出现，且内容与 delta 一致（无遗漏、无多余）。</td>
+                  <td>
+                    <b>规约</b>：delta 全文<br/><b>代码</b>：<code>openspec/specs/</code> 下的规约文件<br/><b>运行</b>：<code>openspec list --specs</code> 后逐条比对
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>归档时是否还有未勾选的 task？</td>
+                  <td>应无。归档前若有未勾选项会先告警；确认「已完成但漏勾」还是「确实没做」。</td>
+                  <td>
+                    <b>规约</b>：<code>tasks.md</code> 勾选纪律<br/><b>代码</b>：看归档目录里 <code>tasks.md</code> 的方括号<br/><b>运行</b>：归档前先核对未勾选项数量
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ul>
+              <li>用 <code>/opsx-archive</code>（技能 <code>openspec-archive-change</code>）归档，命令等价于 <code>openspec archive</code>。</li>
+              <li>归档过程中它会先检查四件套完成度与未勾选项，再比对 delta 与主力规约，让你确认是否先同步规约——选择先同步，再执行归档。</li>
+              <li>归档完成后核对三件事：活动变更清零、<code>changes/archive/</code> 出现带日期的目录、<code>openspec/specs/&lt;capability&gt;/spec.md</code> 已生成。</li>
+            </ul>
+            <div class="note">
+              发布（本迭代的完成定义）是本课流程的最后一环，归档是规约库的收尾动作。当堂能做完最好；发布窗口内来不及的，课后补齐即可——但不要把它当成可选项：不归档，第 4 课就没有可继承的规约基线。
+            </div>
+          </section>
+          <p class="note">把否决理由用自己的话写进 design / 迭代说明；原文照录本表不算 ADR。</p>
+          <div class="think">
+            <h2>想一想：判断与取舍</h2>
+            <p><b>先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul>
+              <li>三项设计决策是否用自己的语言写完？缺一项能否认定发布成功？</li>
+            </ul>
+          </div>
+          <div class="pager">
+            <a class="btn btn-ghost" href="apply.html">← 按规约实现</a><a class="btn btn-ghost" href="nongoals.html">明确不做 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>

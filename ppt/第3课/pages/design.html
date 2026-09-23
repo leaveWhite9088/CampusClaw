@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8"/> <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>设计决策 · 第 3 课教程</title>
+    <link rel="stylesheet" href="../css/app.css"/>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="../index.html">CampusClaw<span>第 3 课 · 实现教程</span></a>
+        <nav aria-label="主导航">
+          <p class="nav-label">本课</p>
+          <a href="../index.html">概览</a> <a href="scope.html">要做成什么样</a> <a href="architecture.html">系统怎么走</a> <a href="security.html">安全与部署</a> <a href="auth-schemes.html">认证方案对照</a>
+          <p class="nav-label">实现步骤</p>
+          <a href="roadmap.html">路线图</a> <a href="s1-skeleton.html">1 骨架与配置</a> <a href="s2-data.html">2 数据与种子</a> <a href="s3-auth.html">3 登录与会话</a> <a href="s4-isolation.html">4 班级隔离</a> <a href="s5-upload.html">5 上传入库</a> <a href="s6-frontend.html">6 前端页面</a> <a href="s7-compose.html">7 Compose</a> <a href="s8-verify.html">8 验收</a>
+          <p class="nav-label">核对</p>
+          <a href="checklist.html">核对总表</a>
+          <p class="nav-label">发布</p>
+          <a href="design.html" class="active">设计决策</a> <a href="apply.html">按规约实现</a> <a href="ship.html">提交清单</a> <a href="nongoals.html">明确不做</a>
+        </nav>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <button class="menu-btn" type="button" id="menuBtn">菜单</button>
+          <div class="crumb">
+            发布 / 设计
+          </div>
+          <div class="badge">
+            公开教程 · 无需登录
+          </div>
+        </header>
+        <main class="content">
+          <h1>设计决策</h1>
+          <p class="lead">用自己的话写入 README 或迭代说明。照录教程原文无效。</p>
+          <div class="note howto">
+            每步按同一顺序展开：<b>知识点</b> → <b>其他可行方案与选择依据</b> → <b>本步要核对</b> → <b>动手要做</b>。“怎么查”一列给出三处证据：规约读哪条、代码搜什么、运行做什么；发现不一致，先补规约或改实现。全课汇总见 <a href="checklist.html">实现方案核对总表</a>。
+          </div>
+          <nav class="steps">
+            <p class="steps-h">本页步骤</p>
+            <a href="#u1"><span class="steps-n">1</span><span class="steps-t">为什么要写 ADR</span></a><a href="#u2"><span class="steps-n">2</span><span class="steps-t">四项必须自己写明的决策</span></a>
+          </nav>
+          <section class="unit" id="u1">
+            <h2 class="unit-h">
+              <span class="unit-n">1</span><span class="unit-t">为什么要写 ADR</span>
+            </h2>
+            <p class="unit-lead">后人只看到代码，看不到当时为什么这样选；<b>决策记录要留下上下文、决策、备选与否决理由。</b></p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>架构决策记录（ADR，Architecture Decision Record）</h3>
+              <p>典型例子：为什么选 404 而不是 403、为什么选会话 Cookie 而不是 JWT——这些理由代码里看不到，必须留在文档里。</p>
+            </article>
+            <article class="kp-card">
+              <h3>在 OpenSpec 里，决策写在 design.md</h3>
+              <p>第 2 课的四件套中，<code>design.md</code> 就是决策的载体：<code>## Decisions</code> 之下一条决策写成<code>### Decision N: 标题</code>，正文说清做法，再补一行「<b>备选：</b>…」记录被否决的方案与否决理由。</p>
+              <p>所以本课不另起一套文档：决策写进 <code>openspec/changes/&lt;change&gt;/design.md</code>。若另外提交「迭代 1 说明」，其中的决策必须与 <code>design.md</code> 一致——两处说法不同，说明有一处没跟上实现。</p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>只在代码注释中记录原因</td>
+                  <td>修改代码后上下文即丢失。</td>
+                  <td>否决作为唯一载体。要写进 README 或迭代说明。</td>
+                </tr>
+                <tr>
+                  <td>RFC 长文档（Request for Comments，技术方案评审文档）/ 架构幻灯</td>
+                  <td>内容完整，但课堂上写不完。</td>
+                  <td>本课用简短 ADR：上下文、决策、备选方案、否决理由各几句。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>决策记录能否被第三方读懂？</td>
+                  <td>不依赖课堂上下文也能读懂，同伴读完能复述结论。</td>
+                  <td>
+                    <b>规约</b>：是否有可读性要求<br/><b>代码</b>：看是否引用了教程而非本人规约<br/><b>运行</b>：请同伴读一遍并复述四项决策
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section class="unit" id="u2">
+            <h2 class="unit-h">
+              <span class="unit-n">2</span><span class="unit-t">四项必须自己写明的决策</span>
+            </h2>
+            <p class="unit-lead"><b>班级来源、403/404、上传失败、/health 是否查库——这四项必须与实现一致，且用自己的话写。</b></p>
+            <h3 class="unit-sub">知识点</h3>
+            <article class="kp-card">
+              <h3>取舍要可辩护</h3>
+              <p>403/404、health 是否检查数据库、会话还是 JWT，都没有唯一正确答案，但必须全文一致并写进文档。演示 change 采用服务端 Session Cookie 与跨班 404。发布门禁 3 要求<strong>三项 ADR</strong>（会话与租户来源、404 及备选、上传事务与清理）；<code>/health</code> 存活语义（D9）建议作为第四项写入 README/迭代说明，与 tasks §8.4 一致。</p>
+            </article>
+            <h3 class="unit-sub">其他可行方案与选择依据</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>方案</th>
+                  <th>要点</th>
+                  <th>本课如何取舍</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>直接照录教程对照表</td>
+                  <td>格式正确。</td>
+                  <td>否决。门禁 3 要求用自己的语言，且能指向本人规约。</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">本步要核对</h3>
+            <table class="check-table">
+              <thead>
+                <tr>
+                  <th>核对项</th>
+                  <th>本迭代应采用</th>
+                  <th>怎么查（规约 / 代码 / 运行）</th>
+                  <th>自检</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>四项决策是否都写了？</td>
+                  <td>班级来源、403/404、上传失败无脏数据、/health 是否查库，四项齐备。</td>
+                  <td>
+                    <b>规约</b>：<code>design.md</code>「Decisions」四节（班级来源 D3、404 D3、上传事务 D6、/health D9）<br/><b>代码</b>：逐项对照文档标题<br/><b>运行</b>：缺哪项就不能判定迭代 1 完成
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>每项是否写了备选方案与否决理由？</td>
+                  <td>用本人语言写：上下文、决策、备选、否决理由。照录教程原文不算。</td>
+                  <td>
+                    <b>规约</b>：是否要求记录备选与否决理由<br/><b>代码</b>：看文档中是否有“否决”段落<br/><b>运行</b>：对着自己写的段落回答“为什么不选另一个方案”
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>文档与实现是否一致？</td>
+                  <td>一致。文档写 404 而代码返回 403 属于不一致。</td>
+                  <td>
+                    <b>规约</b>：文档中的跨班返回码<br/><b>代码</b>：搜代码中的实际返回码<br/><b>运行</b>：按文档逐条跑一次，看是否与文档描述相符
+                  </td>
+                  <td class="tick">
+                    <span class="cb"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h3 class="unit-sub">动手要做</h3>
+            <ol>
+              <li>
+                <strong>班级从哪里来？</strong> 只从服务端会话或用户表得到。请求中的 <code>class_id</code> 不能改变数据归属。
+              </li>
+              <li>
+                <strong>跨班回 403 还是 404？</strong> 403 表明资源存在；404 隐藏资源存在性。本需求采用 404，须全文一致。
+              </li>
+              <li>
+                <strong>上传失败如何避免脏数据？</strong> 两表处于同一事务；尽量在写入磁盘前完成校验；失败需删除已写入的文件。
+              </li>
+              <li>
+                <strong><code>/health</code> 是否检查数据库？</strong> 存活与就绪不要混。数据库故障应表现为服务不可用（503），而不是已登录用户被判定为会话失效（401）。
+              </li>
+            </ol>
+          </section>
+          <p class="note">把否决理由用自己的话写进 design / 迭代说明。原文照录本表不算 ADR。<b>技术栈若与第 2 课 design 不一致，先改规约再实现。</b></p>
+          <div class="think">
+            <h2>想一想：判断与取舍</h2>
+            <p><b>先对照本人规约作答。引用不到原文，先改规约再写代码。</b></p>
+            <ul>
+              <li>门禁 3 的三项 ADR 能否在本人 design.md 或 README 找到原文？<code>/health</code> 语义是否也与 D9 一致？找不到的先补规约。</li>
+            </ul>
+          </div>
+          <div class="pager">
+            <a class="btn btn-ghost" href="s8-verify.html">← 8 验收</a><a class="btn btn-ghost" href="apply.html">按规约实现 →</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="../js/app.js"></script>
+  </body>
+</html>
