@@ -24,6 +24,14 @@ def login_required(view):
     return wrapped
 
 
+def _establish_session(user):
+    session.clear()
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+    session["role"] = user["role"]
+    session["class_id"] = user["class_id"]
+
+
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     error = None
@@ -34,13 +42,26 @@ def login():
         if user is None or not check_password_hash(user["password_hash"], password):
             error = "用户名或密码错误"
         else:
-            session.clear()
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
-            session["role"] = user["role"]
-            session["class_id"] = user["class_id"]
+            _establish_session(user)
             return redirect(url_for("materials.list_materials"))
     return render_template("login.html", error=error)
+
+
+@bp.post("/api/login")
+def api_login():
+    """JSON 登录：成功返回角色与班级；失败 401。对应规约「用户登录」Scenario。"""
+    data = request.get_json(silent=True) or request.form
+    username = data.get("username", "")
+    password = data.get("password", "")
+    user = find_user_by_username(username)
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return jsonify({"error": "invalid_credentials"}), 401
+    _establish_session(user)
+    return jsonify({
+        "username": user["username"],
+        "role": user["role"],
+        "class_id": user["class_id"],
+    })
 
 
 @bp.route("/logout")
