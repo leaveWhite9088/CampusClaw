@@ -1,8 +1,5 @@
 # 0923-后端（api）是否暴露给用户？如何通过浏览器直接访问后端接口
 
-> 分析对象：本仓库 CampusClaw 的 Docker Compose 部署（`docker-compose.yml`、`deploy/nginx.conf`、`.env.example`），与课程演示架构同构
-> 规约依据：`openspec/specs/auth-upload/spec.md`「Docker Compose 部署与健康检查」（含「后端服务不直接暴露」Scenario）
-
 ## 一、问题 1：后端 api 是否暴露给用户？
 
 **没有暴露。** 本仓库 `docker-compose.yml` 中，`app` 服务（Flask/gunicorn，监听 8000）只声明 `build / env_file / volumes / healthcheck`，**没有 `ports` 端口映射**（见「配置1」）；`.env.example` 中亦注明 `PORT=8000`「仅 Compose 内部网络可达，不映射到宿主」（见「配置3」）：
