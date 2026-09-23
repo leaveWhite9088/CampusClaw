@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>本班材料 · CampusClaw</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; background: #f0f4f8; margin: 0; }
+    header { background: #1a3a6b; color: #fff; padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; }
+    header .brand { font-size: 18px; font-weight: bold; }
+    header .who { font-size: 13px; }
+    header a { color: #cfe0ff; font-size: 13px; margin-left: 12px; }
+    main { max-width: 880px; margin: 28px auto; padding: 0 16px; }
+    .panel { background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.06); padding: 24px 28px; margin-bottom: 20px; }
+    h2 { font-size: 17px; margin: 0 0 16px; color: #1a3a6b; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+    th { color: #888; font-weight: normal; font-size: 13px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; background: #e8f0fe; color: #1a5fd0; }
+    form.upload { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    input[type=text] { padding: 8px; border: 1px solid #ccd; border-radius: 6px; }
+    button { padding: 9px 18px; background: #1a5fd0; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    .empty { color: #999; font-size: 14px; padding: 18px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="brand">CampusClaw · 班级 {{ class_id }}</span>
+    <span class="who">
+      {{ username }}（{{ '教师' if role == 'teacher' else '学生' }}）
+      <a href="{{ url_for('auth.logout') }}">退出登录</a>
+    </span>
+  </header>
+  <main>
+    {% if role == 'teacher' %}
+    <div class="panel">
+      <h2>上传教学材料（仅教师）</h2>
+      <form class="upload" method="post" action="{{ url_for('materials.upload') }}" enctype="multipart/form-data">
+        <input type="text" name="title" placeholder="材料标题（默认可取文件名）">
+        <input type="file" name="file" accept=".txt,.md" required>
+        <button type="submit">上传入库</button>
+      </form>
+    </div>
+    {% endif %}
+    <div class="panel">
+      <h2>本班材料列表 <span class="badge">仅显示班级 {{ class_id }} 的数据</span></h2>
+      {% if materials %}
+      <table>
+        <tr><th>ID</th><th>标题</th><th>文件名</th><th>上传时间</th></tr>
+        {% for m in materials %}
+        <tr>
+          <td>{{ m['id'] }}</td>
+          <td><a href="{{ url_for('materials.material_detail', material_id=m['id']) }}">{{ m['title'] }}</a></td>
+          <td>{{ m['filename'] }}</td>
+          <td>{{ m['created_at'] }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <div class="empty">本班暂无材料。</div>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>
