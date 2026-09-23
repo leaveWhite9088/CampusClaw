@@ -2,20 +2,22 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ material['title'] }} · CampusClaw</title>
-  <style>
-    body { font-family: "Microsoft YaHei", sans-serif; background: #f0f4f8; margin: 0; }
-    main { max-width: 760px; margin: 40px auto; background: #fff; border-radius: 10px; padding: 32px 36px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
-    h1 { font-size: 20px; color: #1a3a6b; }
-    p.meta { color: #999; font-size: 13px; }
-    a { color: #1a5fd0; }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
 </head>
 <body>
-  <main>
-    <h1>{{ material['title'] }}</h1>
-    <p class="meta">班级 {{ material['class_id'] }} · 文件 {{ material['filename'] }} · {{ material['created_at'] }}</p>
-    <p><a href="{{ url_for('materials.list_materials') }}">← 返回本班材料列表</a></p>
+  <header class="topbar">
+    <span class="brand">CampusClaw · 班级 {{ material['class_id'] }}</span>
+    <span class="who"><a href="{{ url_for('materials.list_materials') }}">← 返回本班材料列表</a></span>
+  </header>
+  <main class="page">
+    <div class="card">
+      <h2 class="section-title">{{ material['title'] }}</h2>
+      <p style="color:var(--muted);font-size:13px;">
+        文件 {{ material['filename'] }} · {{ material['created_at'] }}
+      </p>
+    </div>
   </main>
 </body>
 </html>

@@ -2,31 +2,39 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>登录 · CampusClaw</title>
-  <style>
-    body { font-family: "Microsoft YaHei", sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .card { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); width: 340px; }
-    h1 { font-size: 22px; margin: 0 0 8px; color: #1a3a6b; }
-    p.sub { color: #888; font-size: 13px; margin: 0 0 24px; }
-    label { display: block; font-size: 14px; margin: 12px 0 4px; color: #333; }
-    input { width: 100%; padding: 10px; border: 1px solid #ccd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-    button { width: 100%; margin-top: 20px; padding: 11px; background: #1a5fd0; color: #fff; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
-    button:hover { background: #154db0; }
-    .error { color: #c0392b; font-size: 13px; margin-top: 12px; }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
 </head>
 <body>
-  <div class="card">
-    <h1>CampusClaw</h1>
-    <p class="sub">面向中小学的教研智能体 · 请登录</p>
-    <form method="post">
-      <label for="username">用户名</label>
-      <input id="username" name="username" required autofocus>
-      <label for="password">密码</label>
-      <input id="password" name="password" type="password" required>
-      <button type="submit">登 录</button>
-    </form>
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div class="split">
+    <section class="panel-brand">
+      <span class="badge">🎓 课程最终项目演示</span>
+      <h1>CampusClaw 智能教学平台</h1>
+      <p class="tagline">面向中小学的教研智能体：登录 · 权限隔离 · 讲义知识库 · 班级数据边界</p>
+      <div class="pill-stack">
+        <span class="pill">📚 讲义知识库</span>
+        <span class="pill">🔒 跨班隔离与审计</span>
+        <span class="pill">📝 材料上传入库</span>
+      </div>
+    </section>
+    <section class="split-side">
+      <h2>登录</h2>
+      <p class="hint">教师、学生使用账号密码登录；不同账号可体验班级 A、B 的数据隔离。</p>
+      <form method="post">
+        <div class="field">
+          <label for="username">用户名</label>
+          <input id="username" name="username" required autofocus autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="password">密码</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" type="submit" style="width:100%">登 录</button>
+      </form>
+      {% if error %}<div class="form-error">{{ error }}</div>{% endif %}
+      <p class="foot">未登录访问受保护页面将被引导至本页。</p>
+    </section>
   </div>
 </body>
 </html>
