@@ -17,6 +17,7 @@
       <p style="color:var(--muted);font-size:13px;">
         文件 {{ material['filename'] }} · {{ material['created_at'] }}
       </p>
+      <p><a class="btn btn-outline" href="{{ url_for('materials.download', material_id=material['id']) }}">下载原文件</a></p>
     </div>
   </main>
 </body>

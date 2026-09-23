@@ -32,6 +32,7 @@
 - [x] 5.2 教师上传：落盘 → 解析 txt/md → 同事务写入 materials + knowledge_entries，`class_id` 来自 session — verify: 教师 A 上传后两表各增 1 行且 class 为 A
 - [x] 5.3 上传成功后本班列表可见；学生 A1 刷新列表可见新条但仍无法上传 — verify: 教师上传后 A1 列表含新标题；A1 POST 上传仍 403
 - [x] 5.4 解析失败或非法扩展名返回 4xx 且无脏数据 — verify: 上传 `.exe` 或故意损坏文件后无孤立 DB 行
+- [x] 5.5 实现 `GET /materials/<id>/download`：登录必需；本班 200 带 `Content-Disposition: attachment`；跨班 403；无文件记录的种子材料回退为知识库正文生成下载 — verify: 无痕/无 cookie 请求被重定向登录页且无文件内容；学生 A1 下载 B 班材料返回 403；教师 A 下载本班材料返回 200 且内容正确
 
 ## 6. Docker Compose 与 GET /health（T6）
 

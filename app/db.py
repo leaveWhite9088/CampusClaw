@@ -42,6 +42,19 @@ def get_material(material_id):
         conn.close()
 
 
+def get_knowledge_body(material_id):
+    conn = get_conn()
+    try:
+        row = conn.execute(
+            "SELECT body_text FROM knowledge_entries WHERE material_id = ? "
+            "ORDER BY id LIMIT 1",
+            (material_id,),
+        ).fetchone()
+        return row["body_text"] if row else None
+    finally:
+        conn.close()
+
+
 def insert_material_with_knowledge(class_id, title, filename, file_path, uploaded_by, body_text):
     """落盘解析成功后，同事务写入 materials 与 knowledge_entries。"""
     conn = get_conn()

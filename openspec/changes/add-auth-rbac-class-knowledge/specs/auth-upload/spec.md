@@ -108,6 +108,28 @@
 - **AND** MUST NOT 在材料表或知识库中留下不完整记录
 - **AND** MUST NOT 保留孤立的未关联文件（或 MUST 在失败时清理已写文件）
 
+### Requirement: 材料文件下载
+
+系统 MUST 提供材料原文件（或知识库中对应的等价内容）的下载入口；下载 MUST 要求登录并遵循班级隔离；未登录或跨班的下载请求 MUST NOT 获得文件内容。
+
+#### Scenario: 本班用户下载成功
+
+- **WHEN** 已登录用户（教师 A 或学生 A1）请求下载本班某条材料（如 `GET /materials/<id>/download`）
+- **THEN** 系统 MUST 返回成功响应（HTTP 200）并携带文件内容
+- **AND** 响应 MUST 包含指示下载的响应头（如 `Content-Disposition: attachment`）
+
+#### Scenario: 未登录下载被拒绝
+
+- **WHEN** 未携带有效会话的用户直接访问材料下载地址
+- **THEN** 页面请求 MUST 重定向到登录页，API 请求 MUST 返回 401
+- **AND** 响应 MUST NOT 包含文件内容或文件存储路径
+
+#### Scenario: 跨班下载被拒绝
+
+- **WHEN** 班级 A 的用户（学生 A1 或教师 A）通过下载地址指定 B 班材料的 ID
+- **THEN** 系统 MUST 拒绝访问（HTTP 403 或 404，与按 ID 访问材料一致）
+- **AND** 响应 MUST NOT 返回 B 班文件内容、标题或存储路径
+
 ### Requirement: 预置核心数据
 
 系统 MUST 建立班级、用户、讲义、作业、助手、技能六类核心数据结构（表或等价实体），并预置可验收的样本数据，以支持登录、班级隔离与上传验收。
