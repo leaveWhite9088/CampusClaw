@@ -18,6 +18,7 @@
 - [x] 3.1 实现 `/login` 页面与 POST 登录逻辑；session 写入 `role`、`class_id`；`SECRET_KEY` 仅来自环境变量 — verify: 教师 A、学生 A1 登录后会话字段正确；未设置 `SECRET_KEY` 时启动行为与 design 一致
 - [x] 3.2 实现登出与 `login_required`：未登录访问 `/materials` 重定向登录页 — verify: 清 cookie 后 GET `/materials` 为 302 至 `/login` 且响应体无材料数据
 - [x] 3.3 密码 verify 走哈希；错误密码登录失败 — verify: 错误口令无法建立 session；库中 password 字段非明文
+- [x] 3.4 提供 `/api/login` JSON 登录接口：成功返回 `{username, role, class_id}` 且 `Set-Cookie` 建会话；登录页通过 fetch 调用 — verify: `curl -X POST /api/login` 返回 200 JSON 且响应头含 `HttpOnly; SameSite=Lax`；错误密码返回 401 JSON
 
 ## 4. 班级隔离（T4）
 

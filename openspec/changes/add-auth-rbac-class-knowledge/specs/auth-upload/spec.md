@@ -30,6 +30,14 @@
 - **AND** 对 API 请求 MUST 返回未授权（如 HTTP 401）
 - **AND** 响应 MUST NOT 包含任何本班或他班材料标题、正文或文件路径
 
+#### Scenario: JSON API 登录
+
+- **WHEN** 客户端向 JSON 登录接口（如 `POST /api/login`）提交有效账号密码（JSON 或表单）
+- **THEN** 系统 MUST 返回成功响应（如 HTTP 200），body 含用户标识、角色（role）与所属班级（class_id）
+- **AND** 响应 MUST 通过 `Set-Cookie` 建立服务端会话，cookie MUST 为 HttpOnly 且带 SameSite 属性
+- **WHEN** 提交错误密码
+- **THEN** 接口 MUST 返回 HTTP 401 且 MUST NOT 建立会话
+
 ### Requirement: 角色权限
 
 系统 MUST 按会话中的角色授权：教师可上传与管理本班材料；学生对本班材料只读；学生调用上传或管理接口 MUST 被拒绝。
