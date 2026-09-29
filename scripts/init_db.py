@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from werkzeug.security import generate_password_hash
 
+from app.db import FTS_SCHEMA, RETRIEVAL_SCHEMA
+
 DB_PATH = os.environ.get(
     "DATABASE", os.path.join(os.path.dirname(__file__), "..", "data", "app.db")
 )
@@ -75,6 +77,8 @@ def main():
     try:
         with conn:
             conn.executescript(SCHEMA)
+            conn.executescript(RETRIEVAL_SCHEMA)
+            conn.executescript(FTS_SCHEMA)
 
             if conn.execute("SELECT COUNT(*) FROM classes").fetchone()[0]:
                 print("数据库已初始化，跳过种子。")

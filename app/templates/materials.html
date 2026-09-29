@@ -15,6 +15,27 @@
     </span>
   </header>
   <main class="page">
+    <div class="card">
+      <h2 class="section-title">知识库检索 <span class="tag">仅本班材料</span></h2>
+      <div class="card-row">
+        <input type="text" id="search-q" placeholder="用一句话检索本班材料…" class="grow" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        <select id="search-mode" style="padding:10px;border:1px solid var(--border);border-radius:8px;">
+          <option value="hybrid">混合</option>
+          <option value="keyword">关键字</option>
+          <option value="vector">向量</option>
+        </select>
+        <button class="btn btn-primary" onclick="doSearch()">检索</button>
+      </div>
+      <div id="search-result"></div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">问答 <span class="tag">有依据才作答</span></h2>
+      <div class="card-row">
+        <input type="text" id="ask-q" placeholder="就本班材料提问…" class="grow" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        <button class="btn btn-primary" onclick="doAsk()">提问</button>
+      </div>
+      <div id="ask-result"></div>
+    </div>
     {% if role == 'teacher' %}
     <div class="card">
       <h2 class="section-title">上传教学材料 <span class="tag">仅教师</span></h2>
@@ -44,5 +65,50 @@
       {% endif %}
     </div>
   </main>
+  <script>
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function hitHtml(h, i) {
+      return `<div style="padding:10px 0;border-top:1px solid var(--border);">
+        <div><b>[${i + 1}]</b> <a class="link-go" href="/materials/${h.material_id}">${esc(h.material_title)}</a>
+          <span class="tag">切片 ${h.chunk_index} · 字符 ${h.start_offset}–${h.end_offset}</span></div>
+        <div style="margin-top:4px;color:var(--muted,#666);">${esc(h.excerpt)}</div>
+      </div>`;
+    }
+    async function doSearch() {
+      const q = document.getElementById('search-q').value.trim();
+      const mode = document.getElementById('search-mode').value;
+      const box = document.getElementById('search-result');
+      if (!q) { box.innerHTML = '<div class="empty">查询不能为空。</div>'; return; }
+      box.innerHTML = '<div class="empty">检索中…</div>';
+      const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}`);
+      const data = await resp.json();
+      if (resp.status === 503) { box.innerHTML = '<div class="empty">向量检索暂不可用（503），可改用关键字模式。</div>'; return; }
+      if (!resp.ok) { box.innerHTML = `<div class="empty">${esc(data.message || '检索失败')}</div>`; return; }
+      box.innerHTML = data.hits.length
+        ? data.hits.map(hitHtml).join('')
+        : '<div class="empty">资料中未找到相关内容。</div>';
+    }
+    async function doAsk() {
+      const q = document.getElementById('ask-q').value.trim();
+      const box = document.getElementById('ask-result');
+      if (!q) { box.innerHTML = '<div class="empty">问题不能为空。</div>'; return; }
+      box.innerHTML = '<div class="empty">思考中…</div>';
+      const resp = await fetch('/api/ask', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q}),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { box.innerHTML = `<div class="empty">${esc(data.message || '问答失败')}</div>`; return; }
+      let html = `<div style="padding:10px 0;">${esc(data.answer)}</div>`;
+      if (data.citations && data.citations.length) {
+        html += '<div style="border-top:1px solid var(--border);padding-top:6px;"><b>出处：</b>'
+          + data.citations.map(hitHtml).join('') + '</div>';
+      }
+      box.innerHTML = html;
+    }
+  </script>
 </body>
 </html>

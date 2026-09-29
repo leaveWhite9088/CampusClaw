@@ -25,10 +25,22 @@ def create_app():
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-    from . import auth, materials
+    from . import auth, materials, search
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(materials.bp)
+    app.register_blueprint(search.bp)
+
+    # 第 4 课：启动迁移（既有库补切片表）+ 为无切片材料按 auto 补齐索引
+    from .db import ensure_retrieval_schema
+    from .indexing import backfill_missing
+
+    ensure_retrieval_schema(app.config["DATABASE"])
+    with app.app_context():
+        try:
+            backfill_missing()
+        except Exception:
+            pass  # 嵌入/向量库不可用不阻塞启动
 
     @app.get("/health")
     def health():

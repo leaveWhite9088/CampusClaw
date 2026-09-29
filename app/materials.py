@@ -109,7 +109,7 @@ def upload():
         return "文件解析失败", 400
 
     title = request.form.get("title") or os.path.splitext(safe_name)[0]
-    insert_material_with_knowledge(
+    material_id = insert_material_with_knowledge(
         class_id=class_id,
         title=title,
         filename=safe_name,
@@ -117,4 +117,15 @@ def upload():
         uploaded_by=session["user_id"],
         body_text=body_text,
     )
+
+    # 第 4 课：上传事务提交后追加索引（切分 → 嵌入 → 向量库）；失败时材料保留
+    from .db import get_entry_for_material
+    from .indexing import index_entry
+
+    entry = get_entry_for_material(material_id)
+    if entry is not None:
+        try:
+            index_entry(entry["id"], strategy=request.form.get("strategy") or "auto")
+        except Exception:
+            pass  # 索引失败不阻塞上传；切片标 failed，可由教师重建
     return redirect(url_for("materials.list_materials"))
