@@ -8,6 +8,10 @@ services:
     environment:
       DATABASE: /app/data/app.db
       UPLOAD_DIR: /app/uploads
+      QDRANT_URL: http://qdrant:6333
+    depends_on:
+      qdrant:
+        condition: service_started
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
@@ -29,3 +33,13 @@ services:
       app:
         condition: service_healthy
     restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    # 注意：qdrant 不声明 ports —— 向量库仅 Compose 内部网络可达，浏览器/宿主不可直连
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+
+volumes:
+  qdrant_storage:
