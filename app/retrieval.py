@@ -18,8 +18,15 @@ class VectorPathUnavailable(RuntimeError):
 def _fts_terms(raw):
     """按空白分词；trigram 仅支持 ≥3 字符的词，短词走 LIKE 兜底。"""
     terms = [t.strip() for t in raw.split() if t.strip()]
-    long_terms = [t for t in terms if len(t) >= 3]
-    short_terms = [t for t in terms if len(t) < 3]
+    # 无空格的长中文问句（如「磁铁能吸木块吗」）整句短语无法命中，
+    # 追加滑窗二字词作为 OR 条件（命中的仍是原文中真实出现的词，同义改写依旧落空）
+    expanded = list(terms)
+    for t in terms:
+        if len(t) >= 4:
+            expanded.extend(t[i:i + 2] for i in range(len(t) - 1))
+    deduped = list(dict.fromkeys(expanded))
+    long_terms = [t for t in deduped if len(t) >= 3]
+    short_terms = [t for t in deduped if len(t) < 3]
     return long_terms, short_terms
 
 
@@ -54,7 +61,9 @@ def keyword_path(class_id, query, limit=DEFAULT_LIMIT):
             merged[r["chunk_id"]] = _hit(r, score=round(-r["kw_score"], 4))
     for term in short_terms:
         for r in db.like_search(class_id, term, limit):
-            if r["chunk_id"] not in merged:
+            if r["chunk_id"] in merged:
+                merged[r["chunk_id"]]["score"] += float(r["hits"])
+            else:
                 merged[r["chunk_id"]] = _hit(r, score=float(r["hits"]))
     return sorted(merged.values(), key=lambda h: -h["score"])[:limit]
 

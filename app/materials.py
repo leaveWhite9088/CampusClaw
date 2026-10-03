@@ -3,10 +3,10 @@ import uuid
 
 from flask import (
     Blueprint, abort, current_app, redirect, render_template, request,
-    send_file, session, url_for, Response,
+    send_file, url_for, Response,
 )
 
-from .auth import login_required
+from .auth import current_user, login_required
 from .db import (
     get_knowledge_body,
     get_material,
@@ -23,13 +23,14 @@ ALLOWED_EXTENSIONS = {".txt", ".md"}
 @bp.get("/materials")
 @login_required
 def list_materials():
-    rows = query_materials(session["class_id"])
+    user = current_user()
+    rows = query_materials(user["class_id"])
     return render_template(
         "materials.html",
         materials=rows,
-        username=session.get("username"),
-        role=session.get("role"),
-        class_id=session.get("class_id"),
+        username=user["username"],
+        role=user["role"],
+        class_id=user["class_id"],
     )
 
 
@@ -39,7 +40,7 @@ def material_detail(material_id):
     row = get_material(material_id)
     if row is None:
         abort(404)
-    if row["class_id"] != session["class_id"]:
+    if row["class_id"] != current_user()["class_id"]:
         # 跨班访问：403，响应不含他班标题/正文/路径
         abort(403)
     return render_template("material_detail.html", material=row)
@@ -51,7 +52,7 @@ def download(material_id):
     row = get_material(material_id)
     if row is None:
         abort(404)
-    if row["class_id"] != session["class_id"]:
+    if row["class_id"] != current_user()["class_id"]:
         # 跨班下载：403，响应不含他班文件内容/路径
         abort(403)
 
@@ -83,7 +84,8 @@ def download(material_id):
 @bp.post("/materials/upload")
 @login_required
 def upload():
-    if session.get("role") != "teacher":
+    user = current_user()
+    if user["role"] != "teacher":
         abort(403)
 
     file = request.files.get("file")
@@ -94,7 +96,7 @@ def upload():
     if ext not in ALLOWED_EXTENSIONS:
         return "仅支持 .txt / .md 文件", 400
 
-    class_id = session["class_id"]  # class_id 只取自 session
+    class_id = user["class_id"]  # class_id 只取自已验证身份（会话或 Bearer 声明）
     safe_name = os.path.basename(file.filename).replace("..", "_")
     rel_dir = str(class_id)
     abs_dir = os.path.join(current_app.config["UPLOAD_DIR"], rel_dir)
@@ -114,7 +116,7 @@ def upload():
         title=title,
         filename=safe_name,
         file_path=f"{rel_dir}/{stored_name}",
-        uploaded_by=session["user_id"],
+        uploaded_by=user["user_id"],
         body_text=body_text,
     )
 

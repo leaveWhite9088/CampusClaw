@@ -1,9 +1,9 @@
 """检索与问答 API。班级标识仅取自会话；请求中自带的 class_id 一律丢弃。"""
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request
 
 from . import chat, retrieval
-from .auth import login_required
+from .auth import current_user, login_required
 from .chunking import ChunkingError
 from .db import get_entry_for_material, get_material
 from .indexing import index_entry
@@ -41,7 +41,7 @@ def api_search():
         return jsonify({"error": "invalid_mode", "message": "mode 须为 keyword/vector/hybrid"}), 400
 
     # class_id 只取自会话；query/body 中携带的一律无效
-    class_id = session["class_id"]
+    class_id = current_user()["class_id"]
     try:
         result = retrieval.search(class_id, query, mode)
     except retrieval.VectorPathUnavailable as e:
@@ -57,7 +57,7 @@ def api_ask():
     if not question:
         return jsonify({"error": "empty_query", "message": "问题不能为空"}), 400
 
-    class_id = session["class_id"]
+    class_id = current_user()["class_id"]
     try:
         result = retrieval.search(class_id, question, "hybrid")
     except retrieval.VectorPathUnavailable:
@@ -82,7 +82,7 @@ def api_ask():
 def _full_chunks(hits):
     """对话模块输入需要切片正文：按 chunk_id 回表取（仅限本班 ready）。"""
     from .db import fetch_chunks_by_ids
-    rows = fetch_chunks_by_ids(session["class_id"], [h["chunk_id"] for h in hits])
+    rows = fetch_chunks_by_ids(current_user()["class_id"], [h["chunk_id"] for h in hits])
     by_id = {r["chunk_id"]: r for r in rows}
     return [
         {
@@ -97,12 +97,12 @@ def _full_chunks(hits):
 @bp.post("/api/materials/<int:material_id>/reindex")
 @login_required
 def api_reindex(material_id):
-    if session.get("role") != "teacher":
+    if current_user()["role"] != "teacher":
         return jsonify({"error": "forbidden", "message": "仅教师可重建索引"}), 403
     row = get_material(material_id)
     if row is None:
         return jsonify({"error": "not_found"}), 404
-    if row["class_id"] != session["class_id"]:
+    if row["class_id"] != current_user()["class_id"]:
         return jsonify({"error": "forbidden"}), 403
 
     entry = get_entry_for_material(material_id)

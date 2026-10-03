@@ -66,6 +66,20 @@
     </div>
   </main>
   <script>
+    // Bearer 令牌：登录时由 /api/login 签发并保存；API 请求统一携带
+    function authFetch(url, options) {
+      options = options || {};
+      const token = localStorage.getItem('campusclaw_token');
+      if (token) {
+        options.headers = Object.assign({}, options.headers, {
+          'Authorization': 'Bearer ' + token,
+        });
+      }
+      return fetch(url, options);
+    }
+    document.querySelectorAll('a[href$="/logout"]').forEach(a => {
+      a.addEventListener('click', () => localStorage.removeItem('campusclaw_token'));
+    });
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
@@ -82,7 +96,7 @@
       const box = document.getElementById('search-result');
       if (!q) { box.innerHTML = '<div class="empty">查询不能为空。</div>'; return; }
       box.innerHTML = '<div class="empty">检索中…</div>';
-      const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}`);
+      const resp = await authFetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}`);
       const data = await resp.json();
       if (resp.status === 503) { box.innerHTML = '<div class="empty">向量检索暂不可用（503），可改用关键字模式。</div>'; return; }
       if (!resp.ok) { box.innerHTML = `<div class="empty">${esc(data.message || '检索失败')}</div>`; return; }
@@ -95,7 +109,7 @@
       const box = document.getElementById('ask-result');
       if (!q) { box.innerHTML = '<div class="empty">问题不能为空。</div>'; return; }
       box.innerHTML = '<div class="empty">思考中…</div>';
-      const resp = await fetch('/api/ask', {
+      const resp = await authFetch('/api/ask', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({question: q}),
