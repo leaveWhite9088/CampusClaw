@@ -257,6 +257,15 @@ class RetrievalApiTest(ApiTestBase):
         resp = self.client.get("/api/search?q=光照&mode=keyword")    # 2 字走 LIKE 兜底
         self.assertTrue(resp.get_json()["hits"])
 
+    def test_keyword_question_style_hit(self):
+        """无空格的自然问句：滑窗二字词扩展后命中原文出现的词。"""
+        self.login("student_a1", "stu123")
+        resp = self.client.get("/api/search?q=光合作用的场所在哪里&mode=keyword")
+        self.assertEqual(resp.status_code, 200)
+        hits = resp.get_json()["hits"]
+        self.assertTrue(hits)
+        self.assertEqual(hits[0]["material_title"], "光合作用讲义")
+
     def test_keyword_cross_class_empty_200(self):
         self.login("student_a1", "stu123")
         # 「集合」仅出现在 B 班种子材料；跨班表现为 200 + 空 hits
@@ -337,6 +346,92 @@ class RetrievalApiTest(ApiTestBase):
         resp = self.client.post("/api/materials/1/reindex",
                                 json={"strategy": "custom", "max_len": 50})
         self.assertEqual(resp.status_code, 400)
+
+
+class TokenAuthTest(ApiTestBase):
+    """Bearer Token（JWT）认证。"""
+
+    def _get_token(self, username="student_a1", password="stu123"):
+        resp = self.client.post("/api/login", json={"username": username, "password": password})
+        self.assertEqual(resp.status_code, 200)
+        return resp.get_json()
+
+    @staticmethod
+    def _decode_payload(token):
+        import base64
+        part = token.split(".")[1]
+        part += "=" * (-len(part) % 4)
+        return json.loads(base64.urlsafe_b64decode(part))
+
+    def test_login_returns_jwt(self):
+        body = self._get_token()
+        self.assertEqual(body["token_type"], "bearer")
+        token = body["access_token"]
+        self.assertEqual(len(token.split(".")), 3)
+        payload = self._decode_payload(token)
+        for claim in ("sub", "role", "class_id", "exp"):
+            self.assertIn(claim, payload)
+        self.assertEqual(payload["role"], "student")
+        self.assertEqual(payload["class_id"], 1)
+        # 响应同时仍建立 Cookie 会话
+        self.assertIn("Set-Cookie", self.client.post(
+            "/api/login", json={"username": "student_a1", "password": "stu123"}).headers)
+
+    def test_tampered_token_401(self):
+        token = self._get_token()["access_token"]
+        bad = token[:-1] + ("A" if token[-1] != "A" else "B")
+        fresh = self.app.test_client()
+        resp = fresh.get("/api/search?q=光合作用&mode=keyword",
+                         headers={"Authorization": f"Bearer {bad}"})
+        self.assertEqual(resp.status_code, 401)
+
+    def test_expired_token_401(self):
+        from app.token_auth import issue_token
+        expired = issue_token(
+            {"id": 2, "username": "student_a1", "role": "student", "class_id": 1},
+            "test-secret", ttl=-10)
+        fresh = self.app.test_client()
+        resp = fresh.get("/api/search?q=光合作用&mode=keyword",
+                         headers={"Authorization": f"Bearer {expired}"})
+        self.assertEqual(resp.status_code, 401)
+
+    def test_malformed_header_401(self):
+        fresh = self.app.test_client()
+        resp = fresh.get("/api/search?q=光合作用", headers={"Authorization": "Token abc"})
+        self.assertEqual(resp.status_code, 401)
+
+
+@unittest.skipUnless(QDRANT_UP, "Qdrant 不可达")
+class TokenAccessTest(ApiTestBase):
+    """仅凭 Bearer（无 Cookie）访问 API，班级/角色取自令牌声明。"""
+
+    def _student_token(self):
+        resp = self.client.post("/api/login", json={"username": "student_a1", "password": "stu123"})
+        return resp.get_json()["access_token"]
+
+    def test_bearer_only_search_200(self):
+        token = self._student_token()
+        fresh = self.app.test_client()  # 无 Cookie
+        resp = fresh.get("/api/search?q=光合作用&mode=keyword",
+                         headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.get_json()["hits"])
+
+    def test_bearer_class_from_claims_not_params(self):
+        token = self._student_token()
+        fresh = self.app.test_client()
+        # B 班专属词 + 伪造 B 班 class_id：实际过滤仍是令牌声明的 A 班
+        resp = fresh.get("/api/search?q=集合&mode=keyword&class_id=2",
+                         headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json()["hits"], [])
+
+    def test_bearer_role_enforced(self):
+        token = self._student_token()
+        fresh = self.app.test_client()
+        resp = fresh.post("/api/materials/1/reindex", json={"strategy": "auto"},
+                          headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(resp.status_code, 403)
 
 
 @unittest.skipUnless(QDRANT_UP, "Qdrant 不可达")

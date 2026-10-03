@@ -10,11 +10,18 @@
     CHAT_API_KEY=dev-stub
     CHAT_MODEL=stub-chat
 本地开发（非 Compose）则用 http://localhost:9700。
+
+对话接口为抽取式 stub：从服务端传入的编号资料中找出与问题
+字面重叠最多的句子作为回答，并按资料编号追加 [i] 出处标注。
 """
 
 import json
+import re
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+_REF_RE = re.compile(r"\[(\d+)\] 材料《(.+?)》第 (\d+) 节：\n(.*?)(?=\n\n\[\d+\] 材料《|\Z)", re.S)
+_SENT_SPLIT = re.compile(r"(?<=[。！？!?；;])|\n+")
 
 
 def _embed(text, dim=1024):
@@ -29,6 +36,35 @@ def _embed(text, dim=1024):
     return [v / norm for v in vec]
 
 
+def _bigrams(text):
+    return {text[i:i + 2] for i in range(len(text) - 1)}
+
+
+def _extractive_answer(messages):
+    """从 system 消息的编号资料中抽取与问题最相关的句子。"""
+    system = next((m["content"] for m in messages if m["role"] == "system"), "")
+    question = next((m["content"] for m in reversed(messages)
+                     if m["role"] == "user"), "")
+    refs = _REF_RE.search(system) and list(_REF_RE.finditer(system)) or []
+    if not refs or not question:
+        return "资料中未找到相关内容。"
+
+    q_grams = _bigrams(question)
+    best = None  # (score, ref_no, sentence)
+    for m in refs:
+        ref_no, chunk = m.group(1), m.group(4)
+        for sent in _SENT_SPLIT.split(chunk):
+            sent = sent.strip()
+            if len(sent) < 4:
+                continue
+            score = len(q_grams & _bigrams(sent))
+            if best is None or score > best[0]:
+                best = (score, ref_no, sent)
+    if not best or best[0] == 0:
+        return "资料中未找到相关内容。"
+    return f"{best[2]}[{best[1]}]"
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -40,9 +76,8 @@ class Handler(BaseHTTPRequestHandler):
                     for i, t in enumerate(body["input"])]
             self._send({"data": data})
         elif self.path == "/chat/completions":
-            refs = sum(1 for m in body["messages"] if m["role"] == "system")
-            self._send({"choices": [{"message": {"role": "assistant", "content":
-                f"[stub] 已依据服务端提供的 {refs} 组资料作答，出处标注 [1]。"}}]})
+            self._send({"choices": [{"message": {"role": "assistant",
+                                                 "content": _extractive_answer(body["messages"])}}]})
         else:
             self._send({"error": "not found"}, 404)
 

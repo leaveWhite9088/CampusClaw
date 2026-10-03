@@ -39,7 +39,8 @@ docker compose up --build
 - 检索接口：`GET /api/search?q=...&mode=keyword|vector|hybrid`（默认 hybrid，RRF k=60，向量余弦阈值 0.35）；问答接口：`POST /api/ask`（本班混合检索前 4 条，无命中返回「资料中未找到相关内容」且不调用对话模型）。
 - 班级只取自登录会话：请求中携带的 `class_id` 一律丢弃；跨班检索表现为 200 空命中，不返回 403/404。
 - 切分策略：`auto`（默认 800 字/重叠 80）、`custom`（100–2000 字，重叠 0–50%）、`hierarchy`（Markdown 标题分章）；教师可 `POST /api/materials/<id>/reindex` 按新策略重建索引。
-- 关键字检索用 SQLite FTS5 trigram；**不足 3 字符的短词**（如「集合」）trigram 无法索引，自动降级为 LIKE 子串匹配兜底。
+- 关键字检索用 SQLite FTS5 trigram；**不足 3 字符的短词**（如「集合」）trigram 无法索引，自动降级为 LIKE 子串匹配兜底；无空格的长中文问句（如「磁铁能吸木块吗」）自动按滑窗二字词扩展为 OR 条件，命中的仍是原文中真实出现的词。
+- 登录认证为双凭证：Cookie 会话 + Bearer Token（JWT HS256，2 小时有效）。`POST /api/login` 返回 `access_token`，前端保存于 localStorage，检索/问答等 API 请求携带 `Authorization: Bearer` 头；令牌无效或过期返回 401，角色与班级仅从已验证凭证读取。
 - 网关配置在 `.env`（见 `.env.example`）：未配置嵌入网关时，`keyword` 模式仍可用，`vector`/`hybrid` 返回 503，问答返回固定文案——不编造分数或出处；更换嵌入模型（维度变化）须清空 `qdrant_storage` 卷并重建索引。
 
 ### 本地开发（单进程）
@@ -57,3 +58,4 @@ python run.py               # 启动开发服务（http://localhost:8080）
 - 第 2 课：OpenSpec 初始化，编写 `add-auth-rbac-class-knowledge` 变更规约四件套（proposal / design / specs / tasks）
 - 第 3 课：按规约实现登录、班级隔离、上传入库与文件下载，逐条验收；Docker Compose 双服务部署（Nginx 反代 + 后端不暴露端口）并归档规约
 - 第 4 课：新增 `add-traceable-vector-retrieval` 规约并实现——正文切分（auto/custom/hierarchy）、SQLite FTS5 + Qdrant 双库存储、关键字/向量/混合（RRF）三种检索、命中溯源、`/api/ask` 带出处标注的问答、检索侧班级隔离与故障降级
+- 0930 课堂任务：`add-bearer-token-auth`——登录签发 JWT、API 接受 Bearer 与 Cookie 双凭证；基于知识库的 AI 问答演示（问答面板 + [1] 出处标注），演示用抽取式 stub 网关 `scripts/dev_stub_gateway.py`
