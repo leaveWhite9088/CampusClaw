@@ -59,3 +59,4 @@ python run.py               # 启动开发服务（http://localhost:8080）
 - 第 3 课：按规约实现登录、班级隔离、上传入库与文件下载，逐条验收；Docker Compose 双服务部署（Nginx 反代 + 后端不暴露端口）并归档规约
 - 第 4 课：新增 `add-traceable-vector-retrieval` 规约并实现——正文切分（auto/custom/hierarchy）、SQLite FTS5 + Qdrant 双库存储、关键字/向量/混合（RRF）三种检索、命中溯源、`/api/ask` 带出处标注的问答、检索侧班级隔离与故障降级
 - 0930 课堂任务：`add-bearer-token-auth`——登录签发 JWT、API 接受 Bearer 与 Cookie 双凭证；基于知识库的 AI 问答演示（问答面板 + [1] 出处标注），演示用抽取式 stub 网关 `scripts/dev_stub_gateway.py`
+- 第 5 课：新增 `add-skill-prompt-stream-chat` 规约并实现——教师维护班级提示词（`/settings`）与「解题引导」技能（启用开关、只引导不给答案）；学生侧 `/ask` 解题助手：新建会话、连续追问、SSE 流式回答 + 出处标注；OpenAPI 文档（`/openapi.json`）与离线 Swagger 页面（`/swagger`）；`apitest/` 接口测试（`python apitest/run_all.py` 一键出 HTML 报告）
