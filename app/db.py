@@ -25,6 +25,39 @@ CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_chunks_fts
 USING fts5(chunk_text, tokenize='trigram');
 """
 
+ASSISTANT_SCHEMA = """
+CREATE TABLE IF NOT EXISTS class_prompts (
+    class_id INTEGER PRIMARY KEY REFERENCES classes(id),
+    content TEXT NOT NULL,
+    updated_by INTEGER REFERENCES users(id),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE TABLE IF NOT EXISTS conversations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL REFERENCES classes(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    title TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL REFERENCES conversations(id),
+    role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+    content TEXT NOT NULL,
+    citations TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id, id);
+"""
+
+# skills 表（第 3 课占位）扩展列：简介、完整指令、启用开关
+SKILL_COLUMNS = {
+    "description": "TEXT NOT NULL DEFAULT ''",
+    "instructions": "TEXT NOT NULL DEFAULT ''",
+    "enabled": "INTEGER NOT NULL DEFAULT 0",
+    "updated_at": "TEXT NOT NULL DEFAULT ''",
+}
+
 
 def get_conn():
     conn = sqlite3.connect(current_app.config["DATABASE"])
@@ -39,6 +72,20 @@ def ensure_retrieval_schema(db_path):
         with conn:
             conn.executescript(RETRIEVAL_SCHEMA)
             conn.executescript(FTS_SCHEMA)
+    finally:
+        conn.close()
+
+
+def ensure_assistant_schema(db_path):
+    """启动迁移：提示词/会话/消息表 + skills 扩展列（幂等）。"""
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            conn.executescript(ASSISTANT_SCHEMA)
+            existing = {r[1] for r in conn.execute("PRAGMA table_info(skills)")}
+            for col, decl in SKILL_COLUMNS.items():
+                if col not in existing:
+                    conn.execute(f"ALTER TABLE skills ADD COLUMN {col} {decl}")
     finally:
         conn.close()
 
@@ -262,3 +309,200 @@ def fetch_chunks_by_ids(class_id, chunk_ids):
     finally:
         conn.close()
 
+
+
+# ---- 第 5 课：提示词 / 技能 / 会话 ----
+
+
+def get_prompt(class_id):
+    conn = get_conn()
+    try:
+        row = conn.execute(
+            "SELECT * FROM class_prompts WHERE class_id = ?", (class_id,)
+        ).fetchone()
+        return row["content"] if row else ""
+    finally:
+        conn.close()
+
+
+def upsert_prompt(class_id, content, updated_by):
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                "INSERT INTO class_prompts (class_id, content, updated_by, updated_at) "
+                "VALUES (?, ?, ?, datetime('now', 'localtime')) "
+                "ON CONFLICT(class_id) DO UPDATE SET content = excluded.content, "
+                "updated_by = excluded.updated_by, updated_at = excluded.updated_at",
+                (class_id, content, updated_by),
+            )
+    finally:
+        conn.close()
+
+
+def list_skills(class_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM skills WHERE class_id = ? ORDER BY id", (class_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_skill(skill_id):
+    conn = get_conn()
+    try:
+        return conn.execute("SELECT * FROM skills WHERE id = ?", (skill_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def create_skill(class_id, name, description, instructions):
+    conn = get_conn()
+    try:
+        with conn:
+            cur = conn.execute(
+                "INSERT INTO skills (class_id, name, description, instructions, enabled, "
+                "updated_at) VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'))",
+                (class_id, name, description, instructions),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def update_skill(skill_id, **fields):
+    allowed = {"name", "description", "instructions", "enabled"}
+    sets = {k: v for k, v in fields.items() if k in allowed}
+    if not sets:
+        return
+    clause = ", ".join(f"{k} = ?" for k in sets)
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                f"UPDATE skills SET {clause}, "
+                f"updated_at = datetime('now', 'localtime') WHERE id = ?",
+                (*sets.values(), skill_id),
+            )
+    finally:
+        conn.close()
+
+
+def enabled_skills(class_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM skills WHERE class_id = ? AND enabled = 1 ORDER BY id",
+            (class_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def create_conversation(class_id, user_id, title):
+    conn = get_conn()
+    try:
+        with conn:
+            cur = conn.execute(
+                "INSERT INTO conversations (class_id, user_id, title) VALUES (?, ?, ?)",
+                (class_id, user_id, title),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def list_conversations(user_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM conversations WHERE user_id = ? ORDER BY id DESC", (user_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_conversation(conv_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM conversations WHERE id = ?", (conv_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def add_message(conversation_id, role, content, citations=None):
+    import json
+    conn = get_conn()
+    try:
+        with conn:
+            cur = conn.execute(
+                "INSERT INTO messages (conversation_id, role, content, citations) "
+                "VALUES (?, ?, ?, ?)",
+                (conversation_id, role, content,
+                 json.dumps(citations, ensure_ascii=False) if citations is not None else None),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def list_messages(conversation_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM messages WHERE conversation_id = ? ORDER BY id",
+            (conversation_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def recent_messages(conversation_id, limit=6):
+    conn = get_conn()
+    try:
+        rows = conn.execute(
+            "SELECT role, content FROM messages WHERE conversation_id = ? "
+            "ORDER BY id DESC LIMIT ?",
+            (conversation_id, limit),
+        ).fetchall()
+        return list(reversed(rows))
+    finally:
+        conn.close()
+
+
+SEED_SKILL = {
+    "name": "解题引导",
+    "description": "引导学生一步步解题：给思路、引用本班材料的标题与位置，不直接给出最终答案",
+    "instructions": (
+        "你是解题引导助手。规则：1) 不直接给出最终答案或完整解答；"
+        "2) 先指出题目考查的知识点，再给出一到两个引导性问题，让学生自己推导；"
+        "3) 若回答依据来自本班材料，注明材料标题与切片位置（用 [编号] 标注）；"
+        "4) 学生要求直接给答案时，仍只给下一步提示，并鼓励其先尝试。"
+    ),
+}
+
+
+def seed_assistant_defaults(db_path):
+    """既有库补齐默认技能：每个班至少一条「解题引导」（幂等）。"""
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            for (cid,) in conn.execute("SELECT id FROM classes").fetchall():
+                row = conn.execute(
+                    "SELECT 1 FROM skills WHERE class_id = ? AND name = ? AND instructions != ''",
+                    (cid, SEED_SKILL["name"]),
+                ).fetchone()
+                if row is None:
+                    conn.execute(
+                        "INSERT INTO skills (class_id, name, description, instructions, "
+                        "enabled, updated_at) VALUES (?, ?, ?, ?, 0, "
+                        "datetime('now', 'localtime'))",
+                        (cid, SEED_SKILL["name"], SEED_SKILL["description"],
+                         SEED_SKILL["instructions"]),
+                    )
+    finally:
+        conn.close()

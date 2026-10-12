@@ -10,6 +10,8 @@
   <header class="topbar">
     <span class="brand">CampusClaw · 班级 {{ class_id }}</span>
     <span class="who">
+      <a href="{{ url_for('assistant.ask_page') }}">解题助手</a>
+      {% if role == 'teacher' %}<a href="{{ url_for('assistant.settings_page') }}">设置</a>{% endif %}
       {{ username }}（{{ '教师' if role == 'teacher' else '学生' }}）
       <a href="{{ url_for('auth.logout') }}">退出登录</a>
     </span>

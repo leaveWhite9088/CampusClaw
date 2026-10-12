@@ -8,7 +8,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from werkzeug.security import generate_password_hash
 
-from app.db import FTS_SCHEMA, RETRIEVAL_SCHEMA
+from app.db import (
+    ASSISTANT_SCHEMA, FTS_SCHEMA, RETRIEVAL_SCHEMA, SKILL_COLUMNS,
+)
+
+SKILL_SEED = {
+    "name": "解题引导",
+    "description": "引导学生一步步解题：给思路、引用本班材料的标题与位置，不直接给出最终答案",
+    "instructions": (
+        "你是解题引导助手。规则：1) 不直接给出最终答案或完整解答；"
+        "2) 先指出题目考查的知识点，再给出一到两个引导性问题，让学生自己推导；"
+        "3) 若回答依据来自本班材料，注明材料标题与切片位置（用 [编号] 标注）；"
+        "4) 学生要求直接给答案时，仍只给下一步提示，并鼓励其先尝试。"
+    ),
+}
 
 DB_PATH = os.environ.get(
     "DATABASE", os.path.join(os.path.dirname(__file__), "..", "data", "app.db")
@@ -79,6 +92,12 @@ def main():
             conn.executescript(SCHEMA)
             conn.executescript(RETRIEVAL_SCHEMA)
             conn.executescript(FTS_SCHEMA)
+            conn.executescript(ASSISTANT_SCHEMA)
+            # skills 扩展列（与启动迁移同一组规则，保证新库列齐全）
+            existing = {r[1] for r in conn.execute("PRAGMA table_info(skills)")}
+            for col, decl in SKILL_COLUMNS.items():
+                if col not in existing:
+                    conn.execute(f"ALTER TABLE skills ADD COLUMN {col} {decl}")
 
             if conn.execute("SELECT COUNT(*) FROM classes").fetchone()[0]:
                 print("数据库已初始化，跳过种子。")
@@ -118,11 +137,18 @@ def main():
             add_material("B 班·数学第一章习题课", class_b, "b_math_ch1.md",
                          "B 班数学第一章：集合与常用逻辑用语。")
 
-            # 六类核心结构的占位行（讲义/作业/助手/技能本 change 不验收业务功能）
+            # 六类核心结构的占位行（讲义/作业/助手本 change 不验收业务功能）
             conn.execute("INSERT INTO lectures (class_id, title) VALUES (?, '占位讲义')", (class_a,))
             conn.execute("INSERT INTO assignments (class_id, title) VALUES (?, '占位作业')", (class_a,))
             conn.execute("INSERT INTO assistants (class_id, name) VALUES (?, '占位助手')", (class_a,))
-            conn.execute("INSERT INTO skills (class_id, name) VALUES (?, '占位技能')", (class_a,))
+            # 第 5 课：两班各种子一条「解题引导」技能（默认停用，教师上课时启用）
+            for cid in (class_a, class_b):
+                conn.execute(
+                    "INSERT INTO skills (class_id, name, description, instructions, enabled, "
+                    "updated_at) VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'))",
+                    (cid, SKILL_SEED["name"], SKILL_SEED["description"],
+                     SKILL_SEED["instructions"]),
+                )
 
         print(f"初始化完成：{DB_PATH}")
         print("预置账号：teacher_a / teach123（教师·A 班），student_a1 / stu123，student_b1 / stu123")

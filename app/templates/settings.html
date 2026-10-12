@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>教师设置 · CampusClaw</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <style>
+    textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border, #e3dedb); border-radius: 8px; font-family: inherit; font-size: 13.5px; }
+    .skill-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border, #e3dedb); }
+    .skill-row .meta { flex: 1; min-width: 0; }
+    .skill-row .meta .desc { font-size: 12.5px; color: #777; }
+    .switch { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">CampusClaw · 教师设置</span>
+    <span class="who">
+      <a href="{{ url_for('materials.list_materials') }}">材料</a>
+      <a href="{{ url_for('assistant.ask_page') }}">解题助手</a>
+      {{ user['username'] }}（教师）
+      <a href="{{ url_for('auth.logout') }}" id="logout-link">退出登录</a>
+    </span>
+  </header>
+  <main class="page">
+    <div class="card">
+      <h2 class="section-title">班级提示词 <span class="tag">全班共用 · 下一轮对话生效</span></h2>
+      <textarea id="prompt-content" rows="4" placeholder="例如：你是本班的解题助手，语气温和，回答不超过三句话。"></textarea>
+      <div style="margin-top:8px;text-align:right;">
+        <span id="prompt-status" style="font-size:12.5px;color:#777;margin-right:8px;"></span>
+        <button class="btn btn-primary" onclick="savePrompt()">保存提示词</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">解题技能 <span class="tag">启用即注入回答</span></h2>
+      <div id="skills"></div>
+      <h3 style="margin:16px 0 6px;font-size:14px;">新建技能</h3>
+      <div class="card-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+        <input type="text" id="skill-name" placeholder="技能名称，如：解题引导" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        <input type="text" id="skill-desc" placeholder="一句话简介" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        <textarea id="skill-instructions" rows="4" placeholder="完整指令：解题规程、引导步骤、约束（不直接给答案等）"></textarea>
+        <div style="text-align:right;"><button class="btn btn-primary" onclick="createSkill()">新建技能</button></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    function authFetch(url, options) {
+      options = options || {};
+      const token = localStorage.getItem('campusclaw_token');
+      if (token) options.headers = Object.assign({}, options.headers, {'Authorization': 'Bearer ' + token});
+      return fetch(url, options);
+    }
+    document.getElementById('logout-link').addEventListener('click', () => localStorage.removeItem('campusclaw_token'));
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function loadPrompt() {
+      const resp = await authFetch('/api/prompt');
+      const data = await resp.json();
+      document.getElementById('prompt-content').value = data.content || '';
+    }
+    async function savePrompt() {
+      const content = document.getElementById('prompt-content').value.trim();
+      const resp = await authFetch('/api/prompt', {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({content}),
+      });
+      document.getElementById('prompt-status').textContent = resp.ok ? '已保存，下一轮对话生效' : '保存失败';
+    }
+
+    async function loadSkills() {
+      const resp = await authFetch('/api/skills');
+      const data = await resp.json();
+      document.getElementById('skills').innerHTML = data.skills.map(s => `
+        <div class="skill-row">
+          <div class="meta">
+            <b>${esc(s.name)}</b> <span class="tag">${s.enabled ? '已启用' : '已停用'}</span>
+            <div class="desc">${esc(s.description || '')}</div>
+          </div>
+          <button class="btn ${s.enabled ? '' : 'btn-primary'}" onclick="toggleSkill(${s.id}, ${!s.enabled})">
+            ${s.enabled ? '停用' : '启用'}
+          </button>
+        </div>`).join('') || '<div class="empty">暂无技能，先在下方新建一条「解题引导」。</div>';
+    }
+    async function toggleSkill(id, enabled) {
+      await authFetch(`/api/skills/${id}`, {
+        method: 'PATCH', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled}),
+      });
+      loadSkills();
+    }
+    async function createSkill() {
+      const name = document.getElementById('skill-name').value.trim();
+      const description = document.getElementById('skill-desc').value.trim();
+      const instructions = document.getElementById('skill-instructions').value.trim();
+      if (!name || !instructions) { alert('名称与指令不能为空'); return; }
+      const resp = await authFetch('/api/skills', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, description, instructions}),
+      });
+      if (resp.ok) {
+        document.getElementById('skill-name').value = '';
+        document.getElementById('skill-desc').value = '';
+        document.getElementById('skill-instructions').value = '';
+        loadSkills();
+      }
+    }
+
+    loadPrompt();
+    loadSkills();
+  </script>
+</body>
+</html>

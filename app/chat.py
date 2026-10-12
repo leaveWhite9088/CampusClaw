@@ -25,8 +25,12 @@ def available():
     return bool(base and os.environ.get("CHAT_API_KEY") and os.environ.get("CHAT_MODEL"))
 
 
-def generate_answer(question, hits, history=None, timeout=60):
-    """依据命中切片生成带 [1]/[2] 标注的简短回答；失败抛 ChatError。"""
+def generate_answer(question, hits, history=None, timeout=60,
+                    class_prompt="", skill_instructions=""):
+    """依据命中切片生成带 [1]/[2] 标注的简短回答；失败抛 ChatError。
+
+    system 由服务端组装：班级提示词 + 启用技能指令 + 编号资料。
+    """
     base = os.environ.get("CHAT_API_BASE", "").rstrip("/")
     key = os.environ.get("CHAT_API_KEY", "")
     model = os.environ.get("CHAT_MODEL", "")
@@ -37,7 +41,8 @@ def generate_answer(question, hits, history=None, timeout=60):
         f"[{i + 1}] 材料《{h['material_title']}》第 {h['chunk_index']} 节：\n{h['chunk_text']}"
         for i, h in enumerate(hits)
     )
-    messages = [{"role": "system", "content": f"{SYSTEM_PROMPT}\n\n{refs}"}]
+    system_parts = [p for p in (class_prompt, skill_instructions, SYSTEM_PROMPT) if p]
+    messages = [{"role": "system", "content": "\n\n".join(system_parts) + f"\n\n{refs}"}]
     for msg in (history or [])[-6:]:
         # 客户端注入的 system 消息一律丢弃
         if msg.get("role") in ("user", "assistant") and msg.get("content"):

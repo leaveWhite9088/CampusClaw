@@ -25,17 +25,22 @@ def create_app():
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-    from . import auth, materials, search
+    from . import assistant, auth, materials, search
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(materials.bp)
     app.register_blueprint(search.bp)
+    app.register_blueprint(assistant.bp)
 
     # 第 4 课：启动迁移（既有库补切片表）+ 为无切片材料按 auto 补齐索引
-    from .db import ensure_retrieval_schema
+    from .db import (
+        ensure_assistant_schema, ensure_retrieval_schema, seed_assistant_defaults,
+    )
     from .indexing import backfill_missing
 
     ensure_retrieval_schema(app.config["DATABASE"])
+    ensure_assistant_schema(app.config["DATABASE"])
+    seed_assistant_defaults(app.config["DATABASE"])
     with app.app_context():
         try:
             backfill_missing()
@@ -45,6 +50,20 @@ def create_app():
     @app.get("/health")
     def health():
         return {"status": "ok"}
+
+    @app.get("/openapi.json")
+    def openapi_spec():
+        from flask import send_from_directory
+
+        return send_from_directory(
+            app.static_folder, "openapi.json", mimetype="application/json"
+        )
+
+    @app.get("/swagger")
+    def swagger():
+        from flask import render_template
+
+        return render_template("swagger.html")
 
     @app.get("/")
     def index():
