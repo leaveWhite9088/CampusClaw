@@ -70,7 +70,11 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
-        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        try:
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        except (ValueError, UnicodeDecodeError):
+            self._send({"error": "请求体须为 UTF-8 JSON"}, 400)
+            return
         if self.path == "/embeddings":
             data = [{"index": i, "embedding": _embed(t)}
                     for i, t in enumerate(body["input"])]
