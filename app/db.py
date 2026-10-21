@@ -694,6 +694,8 @@ def seed_platform_defaults(db_path):
     conn = sqlite3.connect(db_path)
     try:
         with conn:
+            # 清理历史占位行（第 3 课占位数据：无指令的技能行不参与任何编排）
+            conn.execute("DELETE FROM skills WHERE instructions = '' OR instructions IS NULL")
             for (cid,) in conn.execute("SELECT id FROM classes").fetchall():
                 for tpl in SEED_TEMPLATES:
                     row = conn.execute(

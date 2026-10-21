@@ -1,0 +1,24 @@
+证据：CampusClaw 自建 MCP 服务（campus-tools）原始 JSON-RPC 报文
+取证时间：2026-10-22；执行位置：CampusClaw app 容器内，直连 http://mcp-server:8090/mcp
+
+== 1) initialize 握手 ==
+请求: {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "clientInfo": {"name": "campusclaw", "version": "1.0"}}}
+响应(HTTP 200): {"jsonrpc": "2.0", "id": 1, "result": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "campus-tools", "version": "1.0.0"}}}
+
+== 2) tools/list 发现 ==
+请求: {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+响应(HTTP 200): {"jsonrpc": "2.0", "id": 1, "result": {"tools": [{"name": "formula_hint", "description": "根据学生问题给出公式或步骤提示，不给最终数值答案（数学解题引导用）", "inputSchema": {"type": "object", "properties": {"query": {"type": "string", "description": "学生提问原文"}}, "required": ["query"]}}, {"name": "unit_convert", "description": "米/厘米/千米、千克/克、时/分/秒之间的单位换算，可从自然语言问句取参", "inputSchema": {"type": "object", "properties": {"query": {"type": "string", "description": "学生提问原文"}, "value": {"type": "number"}, "from": {"type": "string"}, "to": {"type": "string"}}, "required": ["query"]}}, {"name": "concept_lookup", "description": "小学数学概念速查（分数/方程/面积/周长/质数等），返回简明定义", "inputSchema": {"type": "object", "properties": {"query": {"type": "string", "description": "概念或提问原文"}}, "required": ["query"]}}]}}
+
+== 3) tools/call 调用 formula_hint ==
+请求: {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "formula_hint", "arguments": {"query": "去括号这一步我不会"}}}
+响应(HTTP 200): {"jsonrpc": "2.0", "id": 1, "result": {"content": [{"type": "text", "text": "根据你的问题，给一条相关公式/法则提示（不给最终答案）：去括号时：括号前的系数要乘到括号内每一项，符号不要漏变；括号前是减号时，去掉括号后里面每一项都要变号。"}], "isError": false}}
+
+== 4) tools/call 调用 unit_convert（从自然语言问句取参） ==
+请求: {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "unit_convert", "arguments": {"query": "把 5 米换成厘米"}}}
+响应(HTTP 200): {"jsonrpc": "2.0", "id": 1, "result": {"content": [{"type": "text", "text": "换算过程：5.0 米 = 5.0 × 1 ÷ 0.01 = 500 厘米。"}], "isError": false}}
+
+== 5) 错误令牌 -> HTTP 401 ==
+HTTP 401: {"error": "unauthorized", "message": "缺少或错误的 Bearer 令牌"}
+
+== 6) 未知方法 -> JSON-RPC -32601 ==
+HTTP 200: {"jsonrpc": "2.0", "id": 1, "error": {"code": -32601, "message": "未知方法：no/such/method"}}

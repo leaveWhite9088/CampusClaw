@@ -1,0 +1,42 @@
+证据：LLM 调用日志列表（教师视角，/api/llm-logs）
+说明：kb_total_* 为本班（或应用绑定范围）知识库切片/字符总量；kb_passed_* 为实际传入 LLM 的切片/字符量。
+
+{"app_id": 7, "conversation_id": 8, "created_at": "2026-10-21 18:10:06", "id": 5, "kb_passed_chars": 754, "kb_passed_chunks": 1, "kb_total_chars": 1156, "kb_total_chunks": 2, "model": "stub-chat", "source": "conversation", "status": "ok", "template_name": "解题引导模板"}
+{"app_id": 1, "conversation_id": 7, "created_at": "2026-10-21 18:08:04", "id": 4, "kb_passed_chars": 1156, "kb_passed_chunks": 2, "kb_total_chars": 1465, "kb_total_chunks": 6, "model": "stub-chat", "source": "conversation", "status": "ok", "template_name": "默认教研模板"}
+{"app_id": null, "conversation_id": 6, "created_at": "2026-10-21 18:07:12", "id": 3, "kb_passed_chars": 19, "kb_passed_chunks": 1, "kb_total_chars": 1465, "kb_total_chunks": 6, "model": "stub-chat", "source": "conversation", "status": "ok", "template_name": "班级提示词"}
+{"app_id": 7, "conversation_id": 5, "created_at": "2026-10-21 18:05:05", "id": 2, "kb_passed_chars": 754, "kb_passed_chunks": 1, "kb_total_chars": 1156, "kb_total_chunks": 2, "model": "stub-chat", "source": "conversation", "status": "ok", "template_name": "解题引导模板"}
+{"app_id": 7, "conversation_id": 4, "created_at": "2026-10-21 17:57:17", "id": 1, "kb_passed_chars": 754, "kb_passed_chunks": 1, "kb_total_chars": 1156, "kb_total_chunks": 2, "model": "stub-chat", "source": "conversation", "status": "ok", "template_name": "解题引导模板"}
+
+证据：最新一条带 MCP 工具调用的日志详情（/api/llm-logs/<id>）
+{
+ "id": 5,
+ "template_name": "解题引导模板",
+ "skill_names": [
+  "数学解题引导"
+ ],
+ "tool_calls": [
+  {
+   "ref": "formula_hint@campus-tools",
+   "status": "denied",
+   "text": ""
+  },
+  {
+   "ref": "unit_convert@campus-tools",
+   "status": "denied",
+   "text": ""
+  }
+ ],
+ "kb_total_chunks": 2,
+ "kb_total_chars": 1156,
+ "kb_passed_chunks": 1,
+ "kb_passed_chars": 754,
+ "model": "stub-chat",
+ "status": "ok",
+ "request_messages_roles": [
+  "system",
+  "user"
+ ],
+ "system_摘要": "你是本班的解题引导老师，语气温和有耐心。\n要求：一次只指出下一步该检查什么，不代替学生完成整道题。\n技能「数学解题引导」：你是数学解题引导助手。规则：1) 先判断题目考查的知识点，再给一条公式或法则提示；2) 只指出下一步该检查什么，不直接给出最终答案；3) 涉及单位换算时给出换算过程；4) 引用本班材料时用 [编号] 标注出处。\n[1] 材料《A 班·数学自习笔记》第 0 节：\n# 数学自习笔记",
+ "user_末条摘要": "去括号要注意什么",
+ "response": "## 去括号与合并同类项[1]"
+}

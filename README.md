@@ -60,3 +60,8 @@ python run.py               # 启动开发服务（http://localhost:8080）
 - 第 4 课：新增 `add-traceable-vector-retrieval` 规约并实现——正文切分（auto/custom/hierarchy）、SQLite FTS5 + Qdrant 双库存储、关键字/向量/混合（RRF）三种检索、命中溯源、`/api/ask` 带出处标注的问答、检索侧班级隔离与故障降级
 - 0930 课堂任务：`add-bearer-token-auth`——登录签发 JWT、API 接受 Bearer 与 Cookie 双凭证；基于知识库的 AI 问答演示（问答面板 + [1] 出处标注），演示用抽取式 stub 网关 `scripts/dev_stub_gateway.py`
 - 第 5 课：新增 `add-skill-prompt-stream-chat` 规约并实现——教师维护班级提示词（`/settings`）与「解题引导」技能（启用开关、只引导不给答案）；学生侧 `/ask` 解题助手：新建会话、连续追问、SSE 流式回答 + 出处标注；OpenAPI 文档（`/openapi.json`）与离线 Swagger 页面（`/swagger`）；`apitest/` 接口测试（`python apitest/run_all.py` 一键出 HTML 报告）
+- 第 6 课：新增 `add-ai-app-platform` 与 `add-mcp-tools` 两个规约并实现——
+  - **AI 应用平台**：内置多个 AI 应用（`/apps`，每班预置「资料问答/解题引导/作文点评」三个内置应用），应用绑定提示词模板 + 技能 + 材料范围；提示词模板支持 `{{skills}}`/`{{knowledge}}` 占位符；技能支持课程技能文件格式上传（`.md`/`.json`，含适用条件与工具白名单解析）；**LLM 调用日志**（`/settings` 页签）完整记录每次调用对话网关的请求 JSON、返回内容、模板/技能注入与知识库「全库 vs 实际传入」统计
+  - **MCP 接入**：同仓自建 `mcp-server/`（JSON-RPC 2.0 over HTTP，Bearer 鉴权，`formula_hint`/`unit_convert`/`concept_lookup` 三个工具，Compose 内部网络可达）；教师登记/连接/断开本班 MCP 服务器（令牌只存服务端，响应只回 `has_auth`）；技能以 `工具名@服务器名` 绑定（保存前四道校验）；命中技能后服务端带令牌确定性调用，返回过安全校验后作为数据拼进用户消息；SSE `meta` 事件携带 `tool_calls`；调用审计可查（`ok`/`denied`/`error`）
+  - 演示数据：`docker compose exec app python scripts/seed_demo.py`（登记并连接 campus-tools、创建「数学解题引导」技能与「数学工具助手」应用）
+  - 测试：`tests/test_lesson6.py`（11 项）、`tests/test_mcp.py`（13 项）、apitest 13 用例全过
