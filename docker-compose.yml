@@ -41,5 +41,19 @@ services:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
 
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    environment:
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
+    # 注意：mcp-server 不声明 ports —— 工具服务仅 Compose 内部网络可达（app 经 http://mcp-server:8090 访问）
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8090/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   qdrant_storage:
