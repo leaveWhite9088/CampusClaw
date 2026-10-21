@@ -378,7 +378,7 @@ bodyChildren.push(body("应用相关接口共 6 个：GET/POST /api/apps、PUT/D
 bodyChildren.push(...img("03-apps-teacher.png", "AI 应用页（教师视角：4 个应用 + 新建应用表单）", 500));
 bodyChildren.push(...img("20-apps-student.png", "AI 应用页（学生视角：只读，无管理入口）", 500));
 bodyChildren.push(h3("2.1.3  使用步骤演示"));
-bodyChildren.push(body("第一步，以教师 teacher_a 登录，进入「AI 应用」页，可见 3 个内置应用与 1 个自建的数学工具助手；第二步，点击「数学工具助手」卡片上的「进入应用」，在应用内点击「＋ 新对话」；第三步，输入问题「单位换算 分数 方程 都是什么」并发送，回答以 SSE 逐段返回并带出处标注（如图 5，命中本班全部材料范围内数学自习笔记的 2 个切片）。学生会话的 app_id 持久化保存，再次进入应用可继续历史会话。"));
+bodyChildren.push(body("第一步，以教师 teacher_a 登录，进入「AI 应用」页，可见 3 个内置应用与 1 个自建的数学工具助手；第二步，点击「资料问答助手」卡片上的「进入应用」（该应用绑定默认教研模板、不绑定技能、知识库为本班全部材料），在应用内点击「＋ 新对话」；第三步，输入问题「单位换算 分数 方程 都是什么」并发送，回答以 SSE 逐段返回并带出处标注（如图 5，命中最相关的数学自习笔记 2 个切片并标注出处）。学生会话的 app_id 持久化保存，再次进入应用可继续历史会话；带 MCP 工具调用的应用会话演示见 2.5.3 节。"));
 bodyChildren.push(...img("12-app-qa-wholeclass.png", "在「资料问答助手」应用内提问（本班全部材料范围，回答带出处）", 500));
 
 bodyChildren.push(h2("2.2  功能二：支持提示词模板"));
@@ -483,7 +483,7 @@ bodyChildren.push(tbl(
   [40, 20, 20, 20]
 ));
 bodyChildren.push(...img("13-log-detail-wholeclass.png", "全库应用（资料问答助手）的日志详情：传入 2/6 切片、1156/1465 字", 520));
-bodyChildren.push(body("日志列表页的每一行都直接展示「传入/总量」（图见 2.5 节设置页截图），例如「2/6 切片 · 1156/1465 字」。即使检索满额命中 4 条，也只是 6 条中的 4 条；切片内容始终按相关度筛选，而非全量粘贴。"));
+bodyChildren.push(body("日志列表页的每一行都直接展示「传入/总量」，例如「2/6 切片 · 1156/1465 字」（图 19）。即使检索满额命中 4 条，也只是 6 条中的 4 条；切片内容始终按相关度筛选，而非全量粘贴。"));
 
 bodyChildren.push(h2("3.3  验证三：绑定技能后，请求中是否包含该技能的全部内容"));
 bodyChildren.push(bodyRuns([
@@ -566,7 +566,7 @@ bodyChildren.push(h2("4.2  API 文档与试调"));
 bodyChildren.push(body("全部 33 个 API 路径书写在 openapi.json（OpenAPI 3.0），/swagger 页面离线加载本地 vendor 的 Swagger UI，可直接配置 Bearer 令牌试调，包括 MCP 的登记、连接、查工具、审计等主要接口（图 18）。", { after: 40 }));
 bodyChildren.push(...img("14-swagger.png", "Swagger 接口文档页（离线可用，含本次新增的全部接口）", 500));
 bodyChildren.push(h2("4.3  运维可观测性"));
-bodyChildren.push(body("除 LLM 调用日志外，MCP 调用审计（mcp_tool_calls，只增不改）按班隔离供教师回放每次工具调用（图 19）；docker compose ps 与 /health 提供服务健康状态；数据经 ./data、./uploads 与 qdrant_storage 卷持久化，重启不丢。", { after: 40 }));
+bodyChildren.push(body("除 LLM 调用日志列表外（图 19），MCP 调用审计（mcp_tool_calls，只增不改）按班隔离供教师回放每次工具调用（见前文图 10 与图 17）；docker compose ps 与 /health 提供服务健康状态；数据经 ./data、./uploads 与 qdrant_storage 卷持久化，重启不丢。", { after: 40 }));
 bodyChildren.push(...img("09-settings-logs.png", "LLM 调用日志列表：每行展示模板、模型、知识库传入/总量与状态", 500));
 
 // —— 5 总结 ——
@@ -606,7 +606,7 @@ const doc = new Document({
       children: buildCoverR1({
         title: "CampusClaw 个人项目应用平台验收报告",
         subtitle: "内置 AI 应用 · 提示词模板 · 知识库检索 · 技能 · MCP 工具接入",
-        englishLabel: "PERSONAL PROJECT ACCEPTANCE REPORT",
+        englishLabel: "ACCEPTANCE REPORT",
         metaLines: [
           "课 程：互联网软件开发技术与实践（2026 年秋）",
           "项 目：CampusClaw —— 面向中小学的教研智能体平台",

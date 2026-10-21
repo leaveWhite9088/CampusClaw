@@ -1,5 +1,7 @@
 # CampusClaw
 
+> 仓库地址：https://github.com/leaveWhite9088/CampusClaw.git （main 分支）
+>
 > 北京大学《互联网软件开发技术与实践》课程项目（2026 年秋，主讲：张齐勋）。
 > 本仓库是课程实训作业：以 SDD（规约驱动开发）方式，借助 AI 编程工具逐课迭代实现。
 
