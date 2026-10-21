@@ -2,11 +2,14 @@
   "openapi": "3.0.3",
   "info": {
     "title": "CampusClaw API",
-    "version": "0.5.0",
-    "description": "CampusClaw 班级知识库教学系统 API 文档。系统按班级隔离数据（class_id 只取自服务端已验证身份，请求中携带的一律忽略）。认证支持两种方式：Cookie 会话（浏览器页面登录后自动携带 session cookie）或 Bearer JWT（由 POST /api/login 返回的 access_token，经 Authorization: Bearer <token> 头提交，有效期 2 小时）。两者任一即可访问受保护接口。错误统一为 JSON：{\"error\": \"...\", \"message\": \"...\"}。"
+    "version": "0.7.0",
+    "description": "CampusClaw 班级知识库教学系统 API 文档。系统按班级隔离数据（class_id 只取自服务端已验证身份，请求中携带的一律忽略）。认证支持两种方式：Cookie 会话（浏览器页面登录后自动携带 session cookie）或 Bearer JWT（由 POST /api/login 返回的 access_token，经 Authorization: Bearer <token> 头提交，有效期 2 小时）。两者任一即可访问受保护接口。错误统一为 JSON：{\"error\": \"...\", \"message\": \"...\"}。 第6课新增：AI 应用（/api/apps）、提示词模板（/api/templates）、技能上传（/api/skills/upload）、LLM 调用日志（/api/llm-logs）与 MCP 工具接入（/api/mcp/*）。MCP 管理接口仅教师可用；令牌只存服务端，响应只含 has_auth 布尔。"
   },
   "servers": [
-    { "url": "/", "description": "当前站点（Compose 部署对外为 Nginx 8088）" }
+    {
+      "url": "/",
+      "description": "当前站点（Compose 部署对外为 Nginx 8088）"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -27,63 +30,137 @@
       "Error": {
         "type": "object",
         "properties": {
-          "error": { "type": "string", "description": "机器可读错误码" },
-          "message": { "type": "string", "description": "人类可读错误说明（部分错误无此字段）" }
+          "error": {
+            "type": "string",
+            "description": "机器可读错误码"
+          },
+          "message": {
+            "type": "string",
+            "description": "人类可读错误说明（部分错误无此字段）"
+          }
         },
-        "required": ["error"]
+        "required": [
+          "error"
+        ]
       },
       "Citation": {
         "type": "object",
         "description": "一条命中切片的引用信息（检索命中与问答引用共用）",
         "properties": {
-          "material_id": { "type": "integer" },
-          "material_title": { "type": "string" },
-          "chunk_id": { "type": "integer" },
-          "chunk_index": { "type": "integer" },
-          "start_offset": { "type": "integer" },
-          "end_offset": { "type": "integer" },
-          "excerpt": { "type": "string", "description": "切片摘录" },
-          "score": { "type": "number", "description": "相关性得分（仅部分检索模式返回）" },
+          "material_id": {
+            "type": "integer"
+          },
+          "material_title": {
+            "type": "string"
+          },
+          "chunk_id": {
+            "type": "integer"
+          },
+          "chunk_index": {
+            "type": "integer"
+          },
+          "start_offset": {
+            "type": "integer"
+          },
+          "end_offset": {
+            "type": "integer"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "切片摘录"
+          },
+          "score": {
+            "type": "number",
+            "description": "相关性得分（仅部分检索模式返回）"
+          },
           "sources": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "融合来源标记（如 keyword/vector，仅 hybrid 融合命中时返回）"
           }
         },
-        "required": ["material_id", "material_title", "chunk_id", "chunk_index", "start_offset", "end_offset", "excerpt"]
+        "required": [
+          "material_id",
+          "material_title",
+          "chunk_id",
+          "chunk_index",
+          "start_offset",
+          "end_offset",
+          "excerpt"
+        ]
       },
       "Hit": {
-        "allOf": [{ "$ref": "#/components/schemas/Citation" }]
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Citation"
+          }
+        ]
       },
       "Skill": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "instructions": { "type": "string", "description": "注入回答组装的技能指令文本" },
-          "enabled": { "type": "boolean" },
-          "updated_at": { "type": "string", "description": "更新时间（SQLite 时间戳字符串）" }
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "注入回答组装的技能指令文本"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "更新时间（SQLite 时间戳字符串）"
+          }
         }
       },
       "Conversation": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "title": { "type": "string" },
-          "created_at": { "type": "string" }
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
         }
       },
       "Message": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "role": { "type": "string", "enum": ["user", "assistant"] },
-          "content": { "type": "string" },
-          "created_at": { "type": "string" },
+          "id": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
           "citations": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/Citation" },
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
             "description": "assistant 消息的引用（无引用时缺省）"
           }
         }
@@ -94,10 +171,20 @@
         "description": "未登录或凭证无效（401）",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" },
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
             "examples": {
-              "unauthorized": { "value": { "error": "unauthorized" } },
-              "invalid_token": { "value": { "error": "invalid_token" } }
+              "unauthorized": {
+                "value": {
+                  "error": "unauthorized"
+                }
+              },
+              "invalid_token": {
+                "value": {
+                  "error": "invalid_token"
+                }
+              }
             }
           }
         }
@@ -106,7 +193,9 @@
         "description": "已登录但无权限（403，如非教师操作教师功能、跨班级访问）",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
           }
         }
       },
@@ -114,7 +203,9 @@
         "description": "资源不存在（404）",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
           }
         }
       }
@@ -123,7 +214,9 @@
   "paths": {
     "/health": {
       "get": {
-        "tags": ["系统"],
+        "tags": [
+          "系统"
+        ],
         "summary": "健康检查",
         "description": "无需登录，供 Compose/部署探活使用。",
         "security": [],
@@ -134,7 +227,12 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "status": { "type": "string", "example": "ok" } }
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
                 }
               }
             }
@@ -144,7 +242,9 @@
     },
     "/api/login": {
       "post": {
-        "tags": ["认证"],
+        "tags": [
+          "认证"
+        ],
         "summary": "JSON 登录，签发 Bearer 令牌",
         "description": "接受 JSON 或表单。成功后同时建立 Cookie 会话并返回 access_token（JWT，2 小时有效）。",
         "security": [],
@@ -155,20 +255,34 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": { "type": "string" },
-                  "password": { "type": "string" }
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
                 },
-                "required": ["username", "password"]
+                "required": [
+                  "username",
+                  "password"
+                ]
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": { "type": "string" },
-                  "password": { "type": "string" }
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
                 },
-                "required": ["username", "password"]
+                "required": [
+                  "username",
+                  "password"
+                ]
               }
             }
           }
@@ -181,11 +295,27 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "username": { "type": "string" },
-                    "role": { "type": "string", "enum": ["teacher", "student"] },
-                    "class_id": { "type": "integer" },
-                    "access_token": { "type": "string", "description": "HS256 JWT" },
-                    "token_type": { "type": "string", "example": "bearer" }
+                    "username": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "teacher",
+                        "student"
+                      ]
+                    },
+                    "class_id": {
+                      "type": "integer"
+                    },
+                    "access_token": {
+                      "type": "string",
+                      "description": "HS256 JWT"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "example": "bearer"
+                    }
                   }
                 }
               }
@@ -195,8 +325,12 @@
             "description": "用户名或密码错误",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" },
-                "example": { "error": "invalid_credentials" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "invalid_credentials"
+                }
               }
             }
           }
@@ -205,34 +339,57 @@
     },
     "/logout": {
       "get": {
-        "tags": ["认证"],
+        "tags": [
+          "认证"
+        ],
         "summary": "登出并清空会话",
         "description": "清除 Cookie 会话后 302 跳转到登录页（Bearer 令牌无服务端状态，由客户端自行丢弃）。",
         "security": [],
         "responses": {
-          "302": { "description": "重定向到 /login" }
+          "302": {
+            "description": "重定向到 /login"
+          }
         }
       }
     },
     "/api/search": {
       "get": {
-        "tags": ["检索"],
+        "tags": [
+          "检索"
+        ],
         "summary": "班级知识库检索",
         "description": "按当前登录用户所在班级检索切片；query 中携带的 class_id 一律忽略。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "q",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "查询词，不能为空"
           },
           {
             "name": "mode",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "enum": ["keyword", "vector", "hybrid"], "default": "hybrid" }
+            "schema": {
+              "type": "string",
+              "enum": [
+                "keyword",
+                "vector",
+                "hybrid"
+              ],
+              "default": "hybrid"
+            }
           }
         ],
         "responses": {
@@ -243,10 +400,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "mode": { "type": "string", "description": "实际生效的检索模式" },
+                    "mode": {
+                      "type": "string",
+                      "description": "实际生效的检索模式"
+                    },
                     "hits": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Hit" }
+                      "items": {
+                        "$ref": "#/components/schemas/Hit"
+                      }
                     }
                   }
                 }
@@ -255,22 +417,45 @@
           },
           "400": {
             "description": "q 为空（empty_query）或 mode 非法（invalid_mode）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
           "503": {
             "description": "向量路径不可用（vector_unavailable，如嵌入服务/Qdrant 故障）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/ask": {
       "post": {
-        "tags": ["问答"],
+        "tags": [
+          "问答"
+        ],
         "summary": "基于班级资料的问答",
         "description": "混合检索前 4 条切片后调用对话网关生成答案；无命中或向量不可用时返回固定文案「资料中未找到相关内容」。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -278,20 +463,28 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "question": { "type": "string" },
+                  "question": {
+                    "type": "string"
+                  },
                   "history": {
                     "type": "array",
                     "description": "可选的对话历史",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "role": { "type": "string" },
-                        "content": { "type": "string" }
+                        "role": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
                 },
-                "required": ["question"]
+                "required": [
+                  "question"
+                ]
               }
             }
           }
@@ -304,10 +497,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "answer": { "type": "string" },
+                    "answer": {
+                      "type": "string"
+                    },
                     "citations": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Citation" }
+                      "items": {
+                        "$ref": "#/components/schemas/Citation"
+                      }
                     }
                   }
                 }
@@ -316,23 +513,53 @@
           },
           "400": {
             "description": "question 为空（empty_query）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
           "503": {
             "description": "对话网关不可用（chat_unavailable）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/materials/{material_id}/reindex": {
       "post": {
-        "tags": ["材料"],
+        "tags": [
+          "材料"
+        ],
         "summary": "重建材料索引（仅教师）",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "material_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "requestBody": {
           "required": false,
@@ -341,11 +568,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "strategy": { "type": "string", "description": "切分策略，默认 auto；custom 时可带下列参数" },
-                  "max_len": { "type": "integer" },
-                  "overlap_ratio": { "type": "number" },
-                  "strip_links": { "type": "boolean" },
-                  "collapse_whitespace": { "type": "boolean" }
+                  "strategy": {
+                    "type": "string",
+                    "description": "切分策略，默认 auto；custom 时可带下列参数"
+                  },
+                  "max_len": {
+                    "type": "integer"
+                  },
+                  "overlap_ratio": {
+                    "type": "number"
+                  },
+                  "strip_links": {
+                    "type": "boolean"
+                  },
+                  "collapse_whitespace": {
+                    "type": "boolean"
+                  }
                 }
               }
             }
@@ -359,10 +597,19 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "material_id": { "type": "integer" },
-                    "strategy": { "type": "string" },
-                    "chunks": { "type": "integer" },
-                    "embedded": { "type": "integer", "description": "成功写入向量库的切片数" }
+                    "material_id": {
+                      "type": "integer"
+                    },
+                    "strategy": {
+                      "type": "string"
+                    },
+                    "chunks": {
+                      "type": "integer"
+                    },
+                    "embedded": {
+                      "type": "integer",
+                      "description": "成功写入向量库的切片数"
+                    }
                   }
                 }
               }
@@ -370,25 +617,54 @@
           },
           "400": {
             "description": "切分策略参数非法（invalid_strategy）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
           "403": {
             "description": "非教师或跨班级材料（forbidden）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "404": {
             "description": "材料不存在（not_found）或无知识库条目（no_entry）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/prompt": {
       "get": {
-        "tags": ["解题助手"],
+        "tags": [
+          "解题助手"
+        ],
         "summary": "读取本班提示词",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "班级提示词",
@@ -396,26 +672,47 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "content": { "type": "string" } }
+                  "properties": {
+                    "content": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       },
       "put": {
-        "tags": ["解题助手"],
+        "tags": [
+          "解题助手"
+        ],
         "summary": "更新本班提示词（仅教师）",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "content": { "type": "string" } },
-                "required": ["content"]
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
               }
             }
           }
@@ -428,8 +725,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ok": { "type": "boolean" },
-                    "content": { "type": "string" }
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -437,18 +738,37 @@
           },
           "400": {
             "description": "content 为空（empty_content）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
         }
       }
     },
     "/api/skills": {
       "get": {
-        "tags": ["解题助手"],
+        "tags": [
+          "解题助手"
+        ],
         "summary": "列出本班技能",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "技能列表",
@@ -459,20 +779,33 @@
                   "properties": {
                     "skills": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Skill" }
+                      "items": {
+                        "$ref": "#/components/schemas/Skill"
+                      }
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       },
       "post": {
-        "tags": ["解题助手"],
+        "tags": [
+          "解题助手"
+        ],
         "summary": "新建技能（仅教师）",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -480,11 +813,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "description": { "type": "string" },
-                  "instructions": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "instructions": {
+                    "type": "string"
+                  }
                 },
-                "required": ["name", "instructions"]
+                "required": [
+                  "name",
+                  "instructions"
+                ]
               }
             }
           }
@@ -496,27 +838,57 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "id": { "type": "integer" } }
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
             "description": "name 或 instructions 为空（invalid）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
         }
       }
     },
     "/api/skills/{skill_id}": {
       "patch": {
-        "tags": ["解题助手"],
+        "tags": [
+          "解题助手"
+        ],
         "summary": "修改技能（仅教师，可改名/描述/指令/启停）",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "skill_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "skill_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -525,10 +897,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "description": { "type": "string" },
-                  "instructions": { "type": "string" },
-                  "enabled": { "type": "boolean" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "instructions": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
                 }
               }
             }
@@ -541,25 +921,48 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "ok": { "type": "boolean" } }
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
           "403": {
             "description": "非教师或技能属于其他班级（forbidden）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
     "/api/conversations": {
       "get": {
-        "tags": ["会话"],
+        "tags": [
+          "会话"
+        ],
         "summary": "列出当前用户的会话",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "会话列表",
@@ -570,28 +973,45 @@
                   "properties": {
                     "conversations": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Conversation" }
+                      "items": {
+                        "$ref": "#/components/schemas/Conversation"
+                      }
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       },
       "post": {
-        "tags": ["会话"],
+        "tags": [
+          "会话"
+        ],
         "summary": "新建会话",
         "description": "title 缺省为「新对话」（截断至 50 字符），首条消息发送后自动以问题前 20 字重命名。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "title": { "type": "string" } }
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -604,24 +1024,46 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "integer" },
-                    "title": { "type": "string" }
+                    "id": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       }
     },
     "/api/conversations/{conv_id}/messages": {
       "get": {
-        "tags": ["会话"],
+        "tags": [
+          "会话"
+        ],
         "summary": "获取会话消息列表",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "conv_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "conv_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -631,28 +1073,54 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "conversation": { "$ref": "#/components/schemas/Conversation" },
+                    "conversation": {
+                      "$ref": "#/components/schemas/Conversation"
+                    },
                     "messages": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Message" }
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       },
       "post": {
-        "tags": ["会话"],
+        "tags": [
+          "会话"
+        ],
         "summary": "发送消息并以 SSE 流式返回答案",
         "description": "响应为 text/event-stream（Swagger UI 的 Try it out 无法渲染 SSE 流，请用 curl -N 观察）。事件序列：若干 delta（{\"type\":\"delta\",\"text\":\"...\"}，每段约 20 字）→ 可选 notice（{\"type\":\"notice\",\"degraded\":true}，向量不可用时降级为关键字检索）→ citations（{\"type\":\"citations\",\"citations\":[Citation...]}）→ done（{\"type\":\"done\"}）。无命中时直接返回 delta(固定文案)→citations([])→done。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "conv_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "conv_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -660,8 +1128,14 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "content": { "type": "string" } },
-                "required": ["content"]
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
               }
             }
           }
@@ -671,86 +1145,186 @@
             "description": "SSE 事件流（text/event-stream），事件见接口描述",
             "content": {
               "text/event-stream": {
-                "schema": { "type": "string", "description": "data: {\"type\": \"delta\"|\"notice\"|\"citations\"|\"done\", ...}\\n\\n" }
+                "schema": {
+                  "type": "string",
+                  "description": "data: {\"type\": \"delta\"|\"notice\"|\"citations\"|\"done\", ...}\\n\\n"
+                }
               }
             }
           },
           "400": {
             "description": "content 为空（empty_content）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "$ref": "#/components/responses/Forbidden" },
-          "404": { "$ref": "#/components/responses/NotFound" },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
           "503": {
             "description": "对话网关不可用（chat_unavailable）",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
     "/login": {
       "get": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "登录页（HTML）",
         "description": "浏览器页面；POST 同路径（表单 username/password）成功后 302 到 /materials。API 调用请用 POST /api/login。",
         "security": [],
-        "responses": { "200": { "description": "登录页 HTML" } }
+        "responses": {
+          "200": {
+            "description": "登录页 HTML"
+          }
+        }
       }
     },
     "/materials": {
       "get": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "材料列表页（HTML）",
         "description": "浏览器页面，需登录；未登录 302 到 /login。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
-        "responses": { "200": { "description": "页面 HTML" } }
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "页面 HTML"
+          }
+        }
       }
     },
     "/materials/{material_id}": {
       "get": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "材料详情页（HTML）",
         "description": "需登录；跨班访问 403，不存在 404。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "material_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "页面 HTML" },
-          "403": { "description": "跨班级访问" },
-          "404": { "description": "材料不存在" }
+          "200": {
+            "description": "页面 HTML"
+          },
+          "403": {
+            "description": "跨班级访问"
+          },
+          "404": {
+            "description": "材料不存在"
+          }
         }
       }
     },
     "/materials/{material_id}/download": {
       "get": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "下载材料文件",
         "description": "需登录；教师上传的材料下发原文件，种子材料以知识库正文生成 markdown 下载。跨班 403，不存在 404。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "material_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "文件内容（attachment）",
             "content": {
-              "application/octet-stream": { "schema": { "type": "string", "format": "binary" } },
-              "text/markdown": { "schema": { "type": "string" } }
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
-          "403": { "description": "跨班级访问" },
-          "404": { "description": "材料或文件不存在" }
+          "403": {
+            "description": "跨班级访问"
+          },
+          "404": {
+            "description": "材料或文件不存在"
+          }
         }
       }
     },
     "/materials/upload": {
       "post": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "上传材料（仅教师，表单提交）",
         "description": "multipart 表单，字段 file（.txt/.md，≤5MB）、title（可选）、strategy（可选）。成功后 302 回 /materials。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -758,37 +1332,894 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "file": { "type": "string", "format": "binary" },
-                  "title": { "type": "string" },
-                  "strategy": { "type": "string" }
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "strategy": {
+                    "type": "string"
+                  }
                 },
-                "required": ["file"]
+                "required": [
+                  "file"
+                ]
               }
             }
           }
         },
         "responses": {
-          "302": { "description": "上传成功，重定向到 /materials" },
-          "400": { "description": "未选文件 / 扩展名不支持 / 解析失败（text/plain）" },
-          "403": { "description": "非教师" }
+          "302": {
+            "description": "上传成功，重定向到 /materials"
+          },
+          "400": {
+            "description": "未选文件 / 扩展名不支持 / 解析失败（text/plain）"
+          },
+          "403": {
+            "description": "非教师"
+          }
         }
       }
     },
     "/ask": {
       "get": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "解题助手问答页（HTML）",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
-        "responses": { "200": { "description": "页面 HTML" } }
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "页面 HTML"
+          }
+        }
       }
     },
     "/settings": {
       "get": {
-        "tags": ["页面"],
+        "tags": [
+          "页面"
+        ],
         "summary": "教师设置页（HTML，仅教师）",
         "description": "非教师 302 回 /materials。",
-        "security": [{ "bearerAuth": [] }, { "cookieAuth": [] }],
-        "responses": { "200": { "description": "页面 HTML" } }
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "页面 HTML"
+          }
+        }
+      }
+    },
+    "/api/templates": {
+      "get": {
+        "tags": [
+          "提示词模板"
+        ],
+        "summary": "列出本班提示词模板",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "提示词模板"
+        ],
+        "summary": "新建模板（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "支持 {{skills}} / {{knowledge}} 占位符"
+                  }
+                },
+                "required": [
+                  "name",
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "名称或内容为空"
+          },
+          "403": {
+            "description": "学生无权"
+          }
+        }
+      }
+    },
+    "/api/templates/{template_id}": {
+      "put": {
+        "tags": [
+          "提示词模板"
+        ],
+        "summary": "修改模板（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "不存在或他班"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "提示词模板"
+        ],
+        "summary": "删除模板（仅教师，内置不可删）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "内置模板不可删除"
+          },
+          "404": {
+            "description": "不存在或他班"
+          }
+        }
+      }
+    },
+    "/api/apps": {
+      "get": {
+        "tags": [
+          "AI 应用"
+        ],
+        "summary": "列出本班 AI 应用",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AI 应用"
+        ],
+        "summary": "新建应用（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "template_id": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "skill_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  },
+                  "material_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "空 = 本班全部材料"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "绑定对象不属于本班"
+          },
+          "403": {
+            "description": "学生无权"
+          }
+        }
+      }
+    },
+    "/api/apps/{app_id}": {
+      "put": {
+        "tags": [
+          "AI 应用"
+        ],
+        "summary": "修改应用（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "AI 应用"
+        ],
+        "summary": "删除应用（仅教师，内置不可删）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "内置应用不可删除"
+          }
+        }
+      }
+    },
+    "/api/apps/{app_id}/conversations": {
+      "post": {
+        "tags": [
+          "AI 应用"
+        ],
+        "summary": "在应用下新建会话",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/skills/upload": {
+      "post": {
+        "tags": [
+          "解题助手"
+        ],
+        "summary": "上传技能文件（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": ".md/.txt 课程技能文件格式或 .json"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "解析失败/工具引用非法"
+          },
+          "403": {
+            "description": "学生无权"
+          }
+        }
+      }
+    },
+    "/api/llm-logs": {
+      "get": {
+        "tags": [
+          "调用日志"
+        ],
+        "summary": "本班 LLM 调用日志列表（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "学生无权"
+          }
+        }
+      }
+    },
+    "/api/llm-logs/{log_id}": {
+      "get": {
+        "tags": [
+          "调用日志"
+        ],
+        "summary": "调用日志详情：完整请求 JSON、返回内容、模板/技能/知识库统计（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "log_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "不存在或他班"
+          }
+        }
+      }
+    },
+    "/api/mcp/servers": {
+      "get": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "列出本班 MCP 服务器（含 has_auth 与工具数，不含令牌）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "登记 MCP 服务器（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "base_url": {
+                    "type": "string",
+                    "maxLength": 512
+                  },
+                  "auth_token": {
+                    "type": "string",
+                    "description": "Bearer 令牌，只存服务端"
+                  }
+                },
+                "required": [
+                  "name",
+                  "base_url"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "description": "参数非法或同班同名"
+          }
+        }
+      }
+    },
+    "/api/mcp/servers/{server_id}": {
+      "put": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "修改服务器（仅教师；令牌留空不改；修改后需重新连接）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "删除服务器（仅教师；缓存级联清空；审计保留）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/mcp/servers/{server_id}/connect": {
+      "post": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "连接并发现：initialize 握手 + tools/list，覆盖写工具缓存（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "502": {
+            "description": "握手或发现失败（地址/令牌错误）"
+          }
+        }
+      }
+    },
+    "/api/mcp/servers/{server_id}/disconnect": {
+      "post": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "断开并清空工具缓存（仅教师）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/mcp/servers/{server_id}/tools": {
+      "get": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "查看服务器已发现的工具清单",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/mcp/tool-calls": {
+      "get": {
+        "tags": [
+          "MCP"
+        ],
+        "summary": "本班最近的 MCP 工具调用审计（仅教师，时间倒序）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/materials/list": {
+      "get": {
+        "tags": [
+          "材料"
+        ],
+        "summary": "本班材料 JSON 列表（应用绑定材料范围用）",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
       }
     }
   }

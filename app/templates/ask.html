@@ -16,6 +16,10 @@
     .msg.user { background: #8a1717; color: #fff; margin-left: auto; }
     .msg.assistant { background: #faf6f5; border: 1px solid var(--border, #e3dedb); }
     .citations { border-top: 1px dashed #d8c9c7; margin-top: 8px; padding-top: 6px; font-size: 12.5px; color: #666; }
+    .tool-chips { margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tool-chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: #eef4ee; color: #1a5c2e; border: 1px solid #cfe3d4; }
+    .tool-chip.denied { background: #fdf0e6; color: #8a4b12; border-color: #eed9c0; }
+    .tool-chip.error { background: #fdf2f2; color: #8a1717; border-color: #eed3d3; }
     .chat-input { display: flex; gap: 8px; margin-top: 12px; }
   </style>
 </head>
@@ -24,6 +28,7 @@
     <span class="brand">CampusClaw · 解题助手</span>
     <span class="who">
       <a href="{{ url_for('materials.list_materials') }}">材料</a>
+      <a href="{{ url_for('apps.apps_page') }}">AI 应用</a>
       {% if user['role'] == 'teacher' %}<a href="{{ url_for('assistant.settings_page') }}">设置</a>{% endif %}
       {{ user['username'] }}（{{ '教师' if user['role'] == 'teacher' else '学生' }}）
       <a href="{{ url_for('auth.logout') }}" id="logout-link">退出登录</a>
@@ -106,6 +111,13 @@
       return html;
     }
 
+    function toolChipsHtml(toolCalls) {
+      if (!toolCalls || !toolCalls.length) return '';
+      return `<div class="tool-chips">` + toolCalls.map(t =>
+        `<span class="tool-chip ${t.status}">🔧 ${esc(t.ref)} · ${t.status}</span>`
+      ).join('') + `</div>`;
+    }
+
     async function sendMessage() {
       const input = document.getElementById('msg-input');
       const text = input.value.trim();
@@ -134,7 +146,7 @@
         // 逐段解析 SSE：data: {...}\n\n
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
-        let buf = '', answer = '', citations = [];
+        let buf = '', answer = '', citations = [], toolCalls = null;
         while (true) {
           const {done, value} = await reader.read();
           if (done) break;
@@ -144,16 +156,20 @@
             const raw = buf.slice(0, idx); buf = buf.slice(idx + 2);
             if (!raw.startsWith('data: ')) continue;
             const ev = JSON.parse(raw.slice(6));
-            if (ev.type === 'delta') {
+            if (ev.type === 'meta') {
+              toolCalls = ev.tool_calls || null;
+              if (toolCalls) streamEl.innerHTML = toolChipsHtml(toolCalls);
+            } else if (ev.type === 'delta') {
               answer += ev.text;
-              streamEl.textContent = answer;
+              streamEl.innerHTML = toolChipsHtml(toolCalls) + `<div class="answer-text">${esc(answer)}</div>`;
               box.scrollTop = box.scrollHeight;
             } else if (ev.type === 'citations') {
               citations = ev.citations;
             }
           }
         }
-        streamEl.outerHTML = msgHtml('assistant', answer, citations);
+        streamEl.outerHTML = msgHtml('assistant', answer, citations).replace(
+          '<div class="msg assistant">', '<div class="msg assistant">' + toolChipsHtml(toolCalls));
         box.scrollTop = box.scrollHeight;
         loadConversations();  // 标题可能已由首条提问更新
       } finally {

@@ -9,7 +9,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from werkzeug.security import generate_password_hash
 
 from app.db import (
-    ASSISTANT_SCHEMA, FTS_SCHEMA, RETRIEVAL_SCHEMA, SKILL_COLUMNS,
+    ASSISTANT_SCHEMA, FTS_SCHEMA, MCP_SCHEMA, PLATFORM_SCHEMA, RETRIEVAL_SCHEMA,
+    SKILL_COLUMNS, seed_assistant_defaults, seed_platform_defaults,
 )
 
 SKILL_SEED = {
@@ -93,11 +94,16 @@ def main():
             conn.executescript(RETRIEVAL_SCHEMA)
             conn.executescript(FTS_SCHEMA)
             conn.executescript(ASSISTANT_SCHEMA)
-            # skills 扩展列（与启动迁移同一组规则，保证新库列齐全）
+            conn.executescript(PLATFORM_SCHEMA)
+            conn.executescript(MCP_SCHEMA)
+            # 扩展列（与启动迁移同一组规则，保证新库列齐全）
             existing = {r[1] for r in conn.execute("PRAGMA table_info(skills)")}
             for col, decl in SKILL_COLUMNS.items():
                 if col not in existing:
                     conn.execute(f"ALTER TABLE skills ADD COLUMN {col} {decl}")
+            conv_cols = {r[1] for r in conn.execute("PRAGMA table_info(conversations)")}
+            if "app_id" not in conv_cols:
+                conn.execute("ALTER TABLE conversations ADD COLUMN app_id INTEGER")
 
             if conn.execute("SELECT COUNT(*) FROM classes").fetchone()[0]:
                 print("数据库已初始化，跳过种子。")
@@ -149,6 +155,12 @@ def main():
                     (cid, SKILL_SEED["name"], SKILL_SEED["description"],
                      SKILL_SEED["instructions"]),
                 )
+            # 第 6 课：本脚本刚插入的种子技能标记为内置来源
+            conn.execute("UPDATE skills SET source = 'built_in' WHERE name = ? AND source = 'manual'",
+                         (SKILL_SEED["name"],))
+
+        seed_assistant_defaults(DB_PATH)
+        seed_platform_defaults(DB_PATH)
 
         print(f"初始化完成：{DB_PATH}")
         print("预置账号：teacher_a / teach123（教师·A 班），student_a1 / stu123，student_b1 / stu123")

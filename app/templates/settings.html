@@ -7,10 +7,22 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
   <style>
     textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border, #e3dedb); border-radius: 8px; font-family: inherit; font-size: 13.5px; }
-    .skill-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border, #e3dedb); }
-    .skill-row .meta { flex: 1; min-width: 0; }
-    .skill-row .meta .desc { font-size: 12.5px; color: #777; }
-    .switch { font-size: 13px; }
+    input[type=text], input[type=password] { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+    .row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border, #e3dedb); flex-wrap: wrap; }
+    .row .meta { flex: 1; min-width: 0; }
+    .row .meta .desc { font-size: 12.5px; color: #777; white-space: pre-wrap; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab { padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px; border: 1px solid var(--border); background: #fff; }
+    .tab.active { background: #8a1717; color: #fff; border-color: #8a1717; }
+    .pane { display: none; }
+    .pane.active { display: block; }
+    .mono { font-family: Consolas, Menlo, monospace; font-size: 12px; }
+    table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+    th, td { border: 1px solid #e3dedb; padding: 5px 8px; text-align: left; }
+    th { background: #faf6f5; }
+    .status-ok { color: #1a7f37; } .status-denied { color: #8a4b12; } .status-error { color: #b00020; }
+    .log-detail pre { background: #f7f4f2; border: 1px solid #e3dedb; border-radius: 8px; padding: 10px; white-space: pre-wrap; word-break: break-all; max-height: 480px; overflow: auto; }
+    .tag-ok { color: #1a7f37; } .tag-no { color: #999; }
   </style>
 </head>
 <body>
@@ -18,14 +30,23 @@
     <span class="brand">CampusClaw · 教师设置</span>
     <span class="who">
       <a href="{{ url_for('materials.list_materials') }}">材料</a>
+      <a href="{{ url_for('apps.apps_page') }}">AI 应用</a>
       <a href="{{ url_for('assistant.ask_page') }}">解题助手</a>
       {{ user['username'] }}（教师）
       <a href="{{ url_for('auth.logout') }}" id="logout-link">退出登录</a>
     </span>
   </header>
   <main class="page">
-    <div class="card">
-      <h2 class="section-title">班级提示词 <span class="tag">全班共用 · 下一轮对话生效</span></h2>
+    <div class="tabs">
+      <div class="tab active" data-pane="pane-prompt" onclick="showTab(this)">班级提示词</div>
+      <div class="tab" data-pane="pane-templates" onclick="showTab(this)">提示词模板</div>
+      <div class="tab" data-pane="pane-skills" onclick="showTab(this)">技能</div>
+      <div class="tab" data-pane="pane-mcp" onclick="showTab(this)">MCP 服务器</div>
+      <div class="tab" data-pane="pane-logs" onclick="showTab(this)">LLM 调用日志</div>
+    </div>
+
+    <div class="card pane active" id="pane-prompt">
+      <h2 class="section-title">班级提示词 <span class="tag">旧会话（无应用）共用 · 下一轮对话生效</span></h2>
       <textarea id="prompt-content" rows="4" placeholder="例如：你是本班的解题助手，语气温和，回答不超过三句话。"></textarea>
       <div style="margin-top:8px;text-align:right;">
         <span id="prompt-status" style="font-size:12.5px;color:#777;margin-right:8px;"></span>
@@ -33,16 +54,68 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2 class="section-title">解题技能 <span class="tag">启用即注入回答</span></h2>
+    <div class="card pane" id="pane-templates">
+      <h2 class="section-title">提示词模板 <span class="tag">支持 {{'{{skills}}'}} 与 {{'{{knowledge}}'}} 占位符</span></h2>
+      <div id="templates"></div>
+      <h3 style="margin:16px 0 6px;font-size:14px;">新建模板</h3>
+      <input type="text" id="tpl-name" placeholder="模板名称" style="width:320px;">
+      <textarea id="tpl-content" rows="4" placeholder="模板正文。可用占位符：{{'{{skills}}'}}（技能指令位置）、{{'{{knowledge}}'}}（编号资料位置）；不写则自动追加在末尾。" style="margin-top:8px;"></textarea>
+      <div style="text-align:right;margin-top:8px;"><button class="btn btn-primary" onclick="createTemplate()">新建模板</button></div>
+    </div>
+
+    <div class="card pane" id="pane-skills">
+      <h2 class="section-title">技能 <span class="tag">启用后按适用条件注入回答</span></h2>
       <div id="skills"></div>
       <h3 style="margin:16px 0 6px;font-size:14px;">新建技能</h3>
-      <div class="card-row" style="flex-direction:column;align-items:stretch;gap:8px;">
-        <input type="text" id="skill-name" placeholder="技能名称，如：解题引导" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
-        <input type="text" id="skill-desc" placeholder="一句话简介" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
-        <textarea id="skill-instructions" rows="4" placeholder="完整指令：解题规程、引导步骤、约束（不直接给答案等）"></textarea>
-        <div style="text-align:right;"><button class="btn btn-primary" onclick="createSkill()">新建技能</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <input type="text" id="skill-name" placeholder="技能名称，如：解题引导">
+        <input type="text" id="skill-desc" placeholder="一句话简介">
+        <input type="text" id="skill-applicable" placeholder="适用条件关键词（逗号分隔，留空=总是生效）">
+        <input type="text" id="skill-tools" placeholder="工具：knowledge_search 或 工具名@服务器名">
       </div>
+      <textarea id="skill-instructions" rows="4" placeholder="完整指令：解题规程、引导步骤、约束（不直接给答案等）" style="margin-top:8px;"></textarea>
+      <div style="text-align:right;margin-top:8px;"><button class="btn btn-primary" onclick="createSkill()">新建技能</button></div>
+
+      <h3 style="margin:16px 0 6px;font-size:14px;">上传技能文件 <span class="tag">.md / .txt / .json</span></h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="file" id="skill-file" accept=".md,.txt,.json">
+        <button class="btn btn-primary" onclick="uploadSkill()">上传并创建技能</button>
+        <span id="upload-status" style="font-size:12.5px;color:#777;"></span>
+      </div>
+      <details style="margin-top:8px;font-size:12.5px;color:#777;">
+        <summary>技能文件格式示例</summary>
+        <pre class="mono" style="white-space:pre-wrap;">名称：数学解题引导
+适用条件：方程,去括号,通分
+工具：knowledge_search, formula_hint@campus-tools
+启用：是
+
+（空行以下为完整指令正文）
+你是数学解题引导助手……</pre>
+      </details>
+    </div>
+
+    <div class="card pane" id="pane-mcp">
+      <h2 class="section-title">MCP 服务器 <span class="tag">令牌只存服务端 · 连接后可发现工具</span></h2>
+      <div id="mcp-servers"></div>
+      <h3 style="margin:16px 0 6px;font-size:14px;">登记服务器</h3>
+      <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;">
+        <input type="text" id="mcp-name" placeholder="名称，如 campus-tools">
+        <input type="text" id="mcp-url" placeholder="Base URL，如 http://mcp-server:8090">
+        <input type="password" id="mcp-token" placeholder="Bearer 令牌（不回显）">
+      </div>
+      <div style="text-align:right;margin-top:8px;">
+        <span id="mcp-status" style="font-size:12.5px;color:#777;margin-right:8px;"></span>
+        <button class="btn btn-primary" onclick="registerServer()">登记</button>
+      </div>
+
+      <h3 style="margin:16px 0 6px;font-size:14px;">最近工具调用审计 <span class="tag">只增不改 · 本班</span></h3>
+      <div id="mcp-audit"></div>
+    </div>
+
+    <div class="card pane" id="pane-logs">
+      <h2 class="section-title">LLM 调用日志 <span class="tag">每次调用对话网关的完整参数与返回</span></h2>
+      <div id="logs"></div>
+      <div id="log-detail" class="log-detail" style="margin-top:14px;"></div>
     </div>
   </main>
   <script>
@@ -56,10 +129,18 @@
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
+    function showTab(el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById(el.dataset.pane).classList.add('active');
+      if (el.dataset.pane === 'pane-mcp') { loadServers(); loadAudit(); }
+      if (el.dataset.pane === 'pane-logs') loadLogs();
+    }
 
+    // ---------- 班级提示词 ----------
     async function loadPrompt() {
-      const resp = await authFetch('/api/prompt');
-      const data = await resp.json();
+      const data = await authFetch('/api/prompt').then(r => r.json());
       document.getElementById('prompt-content').value = data.content || '';
     }
     async function savePrompt() {
@@ -71,19 +152,65 @@
       document.getElementById('prompt-status').textContent = resp.ok ? '已保存，下一轮对话生效' : '保存失败';
     }
 
+    // ---------- 提示词模板 ----------
+    async function loadTemplates() {
+      const data = await authFetch('/api/templates').then(r => r.json());
+      document.getElementById('templates').innerHTML = data.templates.map(t => `
+        <div class="row">
+          <div class="meta">
+            <b>${esc(t.name)}</b> <span class="tag">${t.built_in ? '内置' : '自定义'}</span>
+            <div class="desc mono">${esc(t.content)}</div>
+          </div>
+          <button class="btn" onclick="editTemplate(${t.id})">编辑</button>
+          ${t.built_in ? '' : `<button class="btn" onclick="deleteTemplate(${t.id})">删除</button>`}
+        </div>`).join('') || '<div class="empty">暂无模板</div>';
+    }
+    async function createTemplate() {
+      const name = document.getElementById('tpl-name').value.trim();
+      const content = document.getElementById('tpl-content').value.trim();
+      if (!name || !content) { alert('名称与内容不能为空'); return; }
+      const resp = await authFetch('/api/templates', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, content}),
+      });
+      if (resp.ok) { document.getElementById('tpl-name').value = ''; document.getElementById('tpl-content').value = ''; loadTemplates(); }
+      else alert((await resp.json()).message || '创建失败');
+    }
+    async function editTemplate(id) {
+      const data = await authFetch('/api/templates').then(r => r.json());
+      const t = data.templates.find(x => x.id === id);
+      if (!t) return;
+      const content = prompt('修改模板内容（占位符：{{"{{"}}skills}} / {{"{{"}}knowledge}}）', t.content);
+      if (content === null) return;
+      await authFetch(`/api/templates/${id}`, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({content}),
+      });
+      loadTemplates();
+    }
+    async function deleteTemplate(id) {
+      if (!confirm('删除该模板？绑定它的应用将回退为班级提示词。')) return;
+      await authFetch(`/api/templates/${id}`, {method: 'DELETE'});
+      loadTemplates();
+    }
+
+    // ---------- 技能 ----------
     async function loadSkills() {
-      const resp = await authFetch('/api/skills');
-      const data = await resp.json();
+      const data = await authFetch('/api/skills').then(r => r.json());
       document.getElementById('skills').innerHTML = data.skills.map(s => `
-        <div class="skill-row">
+        <div class="row">
           <div class="meta">
             <b>${esc(s.name)}</b> <span class="tag">${s.enabled ? '已启用' : '已停用'}</span>
+            <span class="tag">${esc(s.source)}</span>
+            ${s.applicable ? `<span class="tag">适用：${esc(s.applicable)}</span>` : '<span class="tag">总是生效</span>'}
+            <span class="tag">工具：${esc(s.tools)}</span>
             <div class="desc">${esc(s.description || '')}</div>
+            <details class="desc"><summary>指令全文</summary><div class="desc mono">${esc(s.instructions)}</div></details>
           </div>
           <button class="btn ${s.enabled ? '' : 'btn-primary'}" onclick="toggleSkill(${s.id}, ${!s.enabled})">
             ${s.enabled ? '停用' : '启用'}
           </button>
-        </div>`).join('') || '<div class="empty">暂无技能，先在下方新建一条「解题引导」。</div>';
+        </div>`).join('') || '<div class="empty">暂无技能</div>';
     }
     async function toggleSkill(id, enabled) {
       await authFetch(`/api/skills/${id}`, {
@@ -94,22 +221,140 @@
     }
     async function createSkill() {
       const name = document.getElementById('skill-name').value.trim();
-      const description = document.getElementById('skill-desc').value.trim();
       const instructions = document.getElementById('skill-instructions').value.trim();
       if (!name || !instructions) { alert('名称与指令不能为空'); return; }
       const resp = await authFetch('/api/skills', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name, description, instructions}),
+        body: JSON.stringify({
+          name,
+          description: document.getElementById('skill-desc').value.trim(),
+          instructions,
+          applicable: document.getElementById('skill-applicable').value.trim(),
+          tools: document.getElementById('skill-tools').value.trim() || 'knowledge_search',
+        }),
       });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok) { loadSkills(); document.getElementById('skill-name').value = ''; document.getElementById('skill-desc').value = ''; document.getElementById('skill-instructions').value = ''; document.getElementById('skill-applicable').value = ''; document.getElementById('skill-tools').value = ''; }
+      else alert(data.message || '创建失败');
+    }
+    async function uploadSkill() {
+      const file = document.getElementById('skill-file').files[0];
+      if (!file) { alert('先选择技能文件'); return; }
+      const fd = new FormData();
+      fd.append('file', file);
+      const resp = await authFetch('/api/skills/upload', {method: 'POST', body: fd});
+      const data = await resp.json().catch(() => ({}));
+      const status = document.getElementById('upload-status');
+      if (resp.ok) { status.textContent = `已解析入库：${data.skill.name}`; loadSkills(); }
+      else status.textContent = data.message || '上传失败';
+    }
+
+    // ---------- MCP ----------
+    async function loadServers() {
+      const data = await authFetch('/api/mcp/servers').then(r => r.json());
+      document.getElementById('mcp-servers').innerHTML = (data.servers || []).map(s => `
+        <div class="row">
+          <div class="meta">
+            <b>${esc(s.name)}</b>
+            <span class="tag">${s.connected ? '已连接' : '未连接'}</span>
+            <span class="tag">令牌：${s.has_auth ? '已配置' : '未配置'}</span>
+            <span class="tag">工具 ${s.tool_count} 个</span>
+            <div class="desc mono">${esc(s.base_url)}</div>
+            ${s.tools.length ? `<div class="desc">已发现：${s.tools.map(t => esc(t.name)).join('、')}</div>` : ''}
+          </div>
+          <button class="btn btn-primary" onclick="connectServer(${s.id})">连接并发现</button>
+          <button class="btn" onclick="disconnectServer(${s.id})">断开</button>
+          <button class="btn" onclick="deleteServer(${s.id})">删除</button>
+        </div>`).join('') || '<div class="empty">尚未登记 MCP 服务器</div>';
+    }
+    async function registerServer() {
+      const name = document.getElementById('mcp-name').value.trim();
+      const base_url = document.getElementById('mcp-url').value.trim();
+      const auth_token = document.getElementById('mcp-token').value.trim();
+      if (!name || !base_url) { alert('名称与 Base URL 不能为空'); return; }
+      const resp = await authFetch('/api/mcp/servers', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, base_url, auth_token}),
+      });
+      const data = await resp.json().catch(() => ({}));
+      document.getElementById('mcp-status').textContent = resp.ok ? '已登记' : (data.message || '登记失败');
       if (resp.ok) {
-        document.getElementById('skill-name').value = '';
-        document.getElementById('skill-desc').value = '';
-        document.getElementById('skill-instructions').value = '';
-        loadSkills();
+        document.getElementById('mcp-name').value = '';
+        document.getElementById('mcp-url').value = '';
+        document.getElementById('mcp-token').value = '';  // 令牌提交后即清空，不回显
+        loadServers();
       }
+    }
+    async function connectServer(id) {
+      const resp = await authFetch(`/api/mcp/servers/${id}/connect`, {method: 'POST'});
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) alert(data.message || '连接失败');
+      loadServers();
+    }
+    async function disconnectServer(id) {
+      await authFetch(`/api/mcp/servers/${id}/disconnect`, {method: 'POST'});
+      loadServers();
+    }
+    async function deleteServer(id) {
+      if (!confirm('删除该服务器？工具缓存一并清空（调用审计保留）。')) return;
+      await authFetch(`/api/mcp/servers/${id}`, {method: 'DELETE'});
+      loadServers();
+    }
+    async function loadAudit() {
+      const data = await authFetch('/api/mcp/tool-calls?limit=20').then(r => r.json());
+      const calls = data.calls || [];
+      document.getElementById('mcp-audit').innerHTML = calls.length ? `
+        <table><tr><th>时间</th><th>工具引用</th><th>状态</th><th>摘要</th><th>用户</th></tr>
+        ${calls.map(c => `<tr>
+          <td class="mono">${esc(c.created_at)}</td>
+          <td class="mono">${esc(c.tool_ref)}</td>
+          <td class="status-${c.status}">${c.status}</td>
+          <td>${esc(c.detail || '')}</td>
+          <td>${esc(c.username || '')}</td></tr>`).join('')}</table>`
+        : '<div class="empty">暂无调用记录</div>';
+    }
+
+    // ---------- LLM 调用日志 ----------
+    async function loadLogs() {
+      const data = await authFetch('/api/llm-logs?limit=50').then(r => r.json());
+      const logs = data.logs || [];
+      document.getElementById('logs').innerHTML = logs.length ? `
+        <table><tr><th>ID</th><th>时间</th><th>来源</th><th>模型</th><th>模板</th>
+        <th>知识库 传入/总量</th><th>状态</th><th></th></tr>
+        ${logs.map(l => `<tr>
+          <td>${l.id}</td>
+          <td class="mono">${esc(l.created_at)}</td>
+          <td>${esc(l.source)}</td>
+          <td class="mono">${esc(l.model)}</td>
+          <td>${esc(l.template_name || '')}</td>
+          <td class="mono">${l.kb_passed_chunks}/${l.kb_total_chunks} 切片 · ${l.kb_passed_chars}/${l.kb_total_chars} 字</td>
+          <td class="status-${l.status}">${l.status}</td>
+          <td><button class="btn" onclick="showLog(${l.id})">详情</button></td></tr>`).join('')}</table>`
+        : '<div class="empty">暂无调用日志，去对话一次就有了。</div>';
+    }
+    async function showLog(id) {
+      const data = await authFetch(`/api/llm-logs/${id}`).then(r => r.json());
+      const log = data.log;
+      let request = log.request_json;
+      try { request = JSON.stringify(JSON.parse(log.request_json), null, 2); } catch (e) {}
+      const skills = JSON.parse(log.skill_names || '[]');
+      document.getElementById('log-detail').innerHTML = `
+        <h3 class="section-title">日志 #${log.id} 详情</h3>
+        <p style="font-size:13px;">
+          模板：<b>${esc(log.template_name)}</b> ｜ 注入技能：<b>${skills.length ? esc(skills.join('、')) : '（无）'}</b>
+          ｜ 知识库：传入 <b>${log.kb_passed_chunks}</b>/${log.kb_total_chunks} 切片
+         （${log.kb_passed_chars}/${log.kb_total_chars} 字）
+          ${log.tool_calls ? '｜ 工具调用：<b>' + log.tool_calls.map(t => esc(t.ref) + '·' + t.status).join('、') + '</b>' : ''}
+        </p>
+        <p style="font-size:13px;"><b>发送给 LLM 的完整请求参数：</b></p>
+        <pre class="mono">${esc(request)}</pre>
+        <p style="font-size:13px;"><b>LLM 返回内容：</b></p>
+        <pre class="mono">${esc(log.response_text || log.error || '')}</pre>`;
+      document.getElementById('log-detail').scrollIntoView({behavior: 'smooth'});
     }
 
     loadPrompt();
+    loadTemplates();
     loadSkills();
   </script>
 </body>

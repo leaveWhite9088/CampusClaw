@@ -57,7 +57,8 @@ def api_ask():
     if not question:
         return jsonify({"error": "empty_query", "message": "问题不能为空"}), 400
 
-    class_id = current_user()["class_id"]
+    user = current_user()
+    class_id = user["class_id"]
     try:
         result = retrieval.search(class_id, question, "hybrid")
     except retrieval.VectorPathUnavailable:
@@ -69,8 +70,20 @@ def api_ask():
         # 无命中切片：不调用生成模型，直接返回固定文案
         return jsonify({"answer": NOT_FOUND_TEXT, "citations": []})
 
+    from .db import get_prompt, kb_stats
+    full = _full_chunks(hits)
+    kb = kb_stats(class_id)
+    log_context = {
+        "class_id": class_id, "user_id": user["user_id"], "source": "ask",
+        "template_name": "班级提示词", "skill_names": [],
+        "kb_total_chunks": kb["total_chunks"], "kb_total_chars": kb["total_chars"],
+        "kb_passed_chunks": len(full),
+        "kb_passed_chars": sum(len(c["chunk_text"]) for c in full),
+    }
     try:
-        answer = chat.generate_answer(question, _full_chunks(hits), data.get("history"))
+        answer = chat.generate_answer(
+            question, full, data.get("history"),
+            template_content=get_prompt(class_id), log_context=log_context)
     except chat.ChatError as e:
         return jsonify({"error": "chat_unavailable", "message": str(e)}), 503
     return jsonify({

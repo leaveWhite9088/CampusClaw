@@ -2,7 +2,7 @@ import os
 import uuid
 
 from flask import (
-    Blueprint, abort, current_app, redirect, render_template, request,
+    Blueprint, abort, current_app, jsonify, redirect, render_template, request,
     send_file, url_for, Response,
 )
 
@@ -32,6 +32,18 @@ def list_materials():
         role=user["role"],
         class_id=user["class_id"],
     )
+
+
+@bp.get("/api/materials/list")
+@login_required
+def api_list_materials():
+    """本班材料 JSON 列表（应用绑定材料范围用）。班级只取自会话。"""
+    user = current_user()
+    rows = query_materials(user["class_id"])
+    return jsonify({"materials": [
+        {"id": r["id"], "title": r["title"], "filename": r["filename"],
+         "created_at": r["created_at"]} for r in rows
+    ]})
 
 
 @bp.get("/materials/<int:material_id>")

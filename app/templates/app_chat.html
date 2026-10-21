@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app.name }} · CampusClaw</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <style>
+    .chat-layout { display: flex; gap: 16px; align-items: flex-start; }
+    .conv-list { width: 220px; flex-shrink: 0; }
+    .conv-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .conv-item.active { background: #f3e4e3; color: #8a1717; font-weight: 600; }
+    .conv-item:hover { background: #f8efee; }
+    .chat-main { flex: 1; min-width: 0; }
+    .msg { padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; max-width: 85%; }
+    .msg.user { background: #8a1717; color: #fff; margin-left: auto; }
+    .msg.assistant { background: #faf6f5; border: 1px solid var(--border, #e3dedb); }
+    .citations { border-top: 1px dashed #d8c9c7; margin-top: 8px; padding-top: 6px; font-size: 12.5px; color: #666; }
+    .tool-chips { margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tool-chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: #eef4ee; color: #1a5c2e; border: 1px solid #cfe3d4; }
+    .tool-chip.denied { background: #fdf0e6; color: #8a4b12; border-color: #eed9c0; }
+    .tool-chip.error { background: #fdf2f2; color: #8a1717; border-color: #eed3d3; }
+    .chat-input { display: flex; gap: 8px; margin-top: 12px; }
+    .bindings { font-size: 12.5px; color: #777; background: #faf6f5; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">CampusClaw · {{ app.name }}</span>
+    <span class="who">
+      <a href="{{ url_for('materials.list_materials') }}">材料</a>
+      <a href="{{ url_for('apps.apps_page') }}">AI 应用</a>
+      {% if user['role'] == 'teacher' %}<a href="{{ url_for('assistant.settings_page') }}">设置</a>{% endif %}
+      {{ user['username'] }}（{{ '教师' if user['role'] == 'teacher' else '学生' }}）
+      <a href="{{ url_for('auth.logout') }}" id="logout-link">退出登录</a>
+    </span>
+  </header>
+  <main class="page">
+    <div class="chat-layout">
+      <div class="card conv-list">
+        <button class="btn btn-primary" style="width:100%" onclick="newConversation()">＋ 新对话</button>
+        <div id="convs" style="margin-top:10px"></div>
+      </div>
+      <div class="card chat-main">
+        <h2 class="section-title">{{ app.name }} <span class="tag">应用会话 · 带出处标注</span></h2>
+        <div class="bindings">
+          提示词模板：{{ app.template_name }} ｜
+          绑定技能：{{ app.skill_names | join('、') if app.skill_names else '（无）' }} ｜
+          知识库范围：{{ app.material_scope }}
+        </div>
+        <div id="messages"><div class="empty">选择一个会话，或新建对话开始提问。</div></div>
+        <div class="chat-input">
+          <input type="text" id="msg-input" class="grow" placeholder="就本班材料提问…"
+                 style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;"
+                 onkeydown="if(event.key==='Enter')sendMessage()">
+          <button class="btn btn-primary" id="send-btn" onclick="sendMessage()">发送</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script>
+    function authFetch(url, options) {
+      options = options || {};
+      const token = localStorage.getItem('campusclaw_token');
+      if (token) options.headers = Object.assign({}, options.headers, {'Authorization': 'Bearer ' + token});
+      return fetch(url, options);
+    }
+    document.getElementById('logout-link').addEventListener('click', () => localStorage.removeItem('campusclaw_token'));
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const APP_ID = {{ app.id }};
+    let currentConv = null;
+
+    async function loadConversations() {
+      const resp = await authFetch('/api/conversations');
+      const data = await resp.json();
+      const mine = data.conversations.filter(c => c.app_id === APP_ID);
+      const box = document.getElementById('convs');
+      box.innerHTML = mine.map(c =>
+        `<div class="conv-item ${currentConv === c.id ? 'active' : ''}" onclick="selectConv(${c.id})">${esc(c.title)}</div>`
+      ).join('') || '<div class="empty" style="font-size:12px">暂无会话</div>';
+    }
+
+    async function newConversation() {
+      const resp = await authFetch(`/api/apps/${APP_ID}/conversations`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+      const data = await resp.json();
+      currentConv = data.id;
+      await loadConversations();
+      renderMessages([]);
+      document.getElementById('msg-input').focus();
+    }
+
+    async function selectConv(id) {
+      currentConv = id;
+      await loadConversations();
+      const resp = await authFetch(`/api/conversations/${id}/messages`);
+      const data = await resp.json();
+      renderMessages(data.messages);
+    }
+
+    function renderMessages(messages) {
+      const box = document.getElementById('messages');
+      if (!messages.length) { box.innerHTML = '<div class="empty">这个会话还没有消息，提一个问题试试。</div>'; return; }
+      box.innerHTML = messages.map(m => msgHtml(m.role, m.content, m.citations)).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function msgHtml(role, content, citations) {
+      let html = `<div class="msg ${role}">${esc(content)}</div>`;
+      if (citations && citations.length) {
+        html = `<div class="msg assistant">${esc(content)}<div class="citations">` +
+          citations.map((c, i) =>
+            `<div><b>[${i + 1}]</b> <a class="link-go" href="/materials/${c.material_id}">${esc(c.material_title)}</a>
+             · 切片 ${c.chunk_index} · 字符 ${c.start_offset}–${c.end_offset}</div>`
+          ).join('') + '</div></div>';
+      }
+      return html;
+    }
+
+    function toolChipsHtml(toolCalls) {
+      if (!toolCalls || !toolCalls.length) return '';
+      return `<div class="tool-chips">` + toolCalls.map(t =>
+        `<span class="tool-chip ${t.status}">🔧 ${esc(t.ref)} · ${t.status}</span>`
+      ).join('') + `</div>`;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('msg-input');
+      const text = input.value.trim();
+      if (!text || !currentConv) return;
+      input.value = '';
+      document.getElementById('send-btn').disabled = true;
+
+      const box = document.getElementById('messages');
+      if (box.querySelector('.empty')) box.innerHTML = '';
+      box.insertAdjacentHTML('beforeend', msgHtml('user', text));
+      box.insertAdjacentHTML('beforeend', '<div class="msg assistant" id="streaming"></div>');
+      const streamEl = document.getElementById('streaming');
+      box.scrollTop = box.scrollHeight;
+
+      try {
+        const resp = await authFetch(`/api/conversations/${currentConv}/messages`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({content: text}),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          streamEl.textContent = err.message || '发送失败';
+          return;
+        }
+        // 逐段解析 SSE：data: {...}\n\n；meta 先于 delta 到达
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '', answer = '', citations = [], toolCalls = null;
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, {stream: true});
+          let idx;
+          while ((idx = buf.indexOf('\n\n')) >= 0) {
+            const raw = buf.slice(0, idx); buf = buf.slice(idx + 2);
+            if (!raw.startsWith('data: ')) continue;
+            const ev = JSON.parse(raw.slice(6));
+            if (ev.type === 'meta') {
+              toolCalls = ev.tool_calls || null;
+              if (toolCalls) streamEl.innerHTML = toolChipsHtml(toolCalls);
+            } else if (ev.type === 'delta') {
+              answer += ev.text;
+              streamEl.innerHTML = toolChipsHtml(toolCalls) + `<div class="answer-text">${esc(answer)}</div>`;
+              box.scrollTop = box.scrollHeight;
+            } else if (ev.type === 'citations') {
+              citations = ev.citations;
+            }
+          }
+        }
+        streamEl.outerHTML = msgHtml('assistant', answer, citations).replace(
+          '<div class="msg assistant">', '<div class="msg assistant">' + toolChipsHtml(toolCalls));
+        box.scrollTop = box.scrollHeight;
+        loadConversations();
+      } finally {
+        document.getElementById('send-btn').disabled = false;
+        document.getElementById('msg-input').focus();
+      }
+    }
+
+    loadConversations().then(() => {
+      const first = document.querySelector('.conv-item');
+      if (first) first.click();
+    });
+  </script>
+</body>
+</html>

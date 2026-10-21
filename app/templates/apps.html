@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 应用 · CampusClaw</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <style>
+    .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .app-card { border: 1px solid var(--border, #e3dedb); border-radius: 10px; padding: 14px 16px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+    .app-card h3 { margin: 0; font-size: 15.5px; }
+    .app-card .desc { font-size: 13px; color: #666; min-height: 36px; }
+    .app-card .bindings { font-size: 12.5px; color: #8a1717; background: #faf6f5; border-radius: 8px; padding: 8px 10px; line-height: 1.7; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-grid label { font-size: 13px; color: #555; display: block; margin-bottom: 4px; }
+    .form-grid input[type=text], .form-grid select { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+    .check-box { max-height: 120px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; }
+    .check-box label { display: block; margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">CampusClaw · AI 应用</span>
+    <span class="who">
+      <a href="{{ url_for('materials.list_materials') }}">材料</a>
+      <a href="{{ url_for('assistant.ask_page') }}">解题助手</a>
+      {% if user['role'] == 'teacher' %}<a href="{{ url_for('assistant.settings_page') }}">设置</a>{% endif %}
+      {{ user['username'] }}（{{ '教师' if user['role'] == 'teacher' else '学生' }}）
+      <a href="{{ url_for('auth.logout') }}" id="logout-link">退出登录</a>
+    </span>
+  </header>
+  <main class="page">
+    <div class="card">
+      <h2 class="section-title">内置 AI 应用 <span class="tag">本班共享 · 点击进入对话</span></h2>
+      <div id="apps" class="app-grid"><div class="empty">加载中…</div></div>
+    </div>
+
+    {% if user['role'] == 'teacher' %}
+    <div class="card">
+      <h2 class="section-title">新建应用 <span class="tag">绑定模板 / 技能 / 材料范围</span></h2>
+      <div class="form-grid">
+        <div>
+          <label>应用名称 *</label>
+          <input type="text" id="app-name" placeholder="如：古诗鉴赏助手">
+        </div>
+        <div>
+          <label>一句话简介</label>
+          <input type="text" id="app-desc" placeholder="这个应用帮学生做什么">
+        </div>
+        <div>
+          <label>提示词模板</label>
+          <select id="app-template"></select>
+        </div>
+        <div>
+          <label>绑定技能（可多选）</label>
+          <div class="check-box" id="app-skills"></div>
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label>限定材料范围（不选 = 本班全部材料）</label>
+          <div class="check-box" id="app-materials"></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <span id="app-status" style="font-size:12.5px;color:#777;margin-right:8px;"></span>
+        <button class="btn btn-primary" onclick="createApp()">创建应用</button>
+      </div>
+    </div>
+    {% endif %}
+  </main>
+  <script>
+    function authFetch(url, options) {
+      options = options || {};
+      const token = localStorage.getItem('campusclaw_token');
+      if (token) options.headers = Object.assign({}, options.headers, {'Authorization': 'Bearer ' + token});
+      return fetch(url, options);
+    }
+    document.getElementById('logout-link').addEventListener('click', () => localStorage.removeItem('campusclaw_token'));
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function loadApps() {
+      const resp = await authFetch('/api/apps');
+      const data = await resp.json();
+      const box = document.getElementById('apps');
+      box.innerHTML = data.apps.map(a => `
+        <div class="app-card">
+          <h3>${esc(a.name)} ${a.built_in ? '<span class="tag">内置</span>' : ''} ${a.enabled ? '' : '<span class="tag">已停用</span>'}</h3>
+          <div class="desc">${esc(a.description || '')}</div>
+          <div class="bindings">
+            模板：${esc(a.template_name)}<br>
+            技能：${esc(a.skill_names.length ? a.skill_names.join('、') : '（无）')}<br>
+            知识库：${esc(a.material_scope)}
+          </div>
+          <div style="display:flex;gap:8px;">
+            <a class="btn btn-primary" style="flex:1;text-align:center;" href="/apps/${a.id}">进入应用</a>
+            {% if user['role'] == 'teacher' %}
+              ${a.built_in ? '' : `<button class="btn" onclick="deleteApp(${a.id})">删除</button>`}
+            {% endif %}
+          </div>
+        </div>`).join('') || '<div class="empty">暂无应用</div>';
+    }
+
+    async function loadOptions() {
+      const [tpls, skills, mats] = await Promise.all([
+        authFetch('/api/templates').then(r => r.json()),
+        authFetch('/api/skills').then(r => r.json()),
+        authFetch('/api/materials/list').then(r => r.json()).catch(() => ({materials: []})),
+      ]);
+      const sel = document.getElementById('app-template');
+      sel.innerHTML = '<option value="">（使用班级提示词）</option>' +
+        tpls.templates.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+      document.getElementById('app-skills').innerHTML = skills.skills.map(s =>
+        `<label><input type="checkbox" value="${s.id}"> ${esc(s.name)}${s.enabled ? '' : '（停用）'}</label>`).join('');
+      document.getElementById('app-materials').innerHTML = (mats.materials || []).map(m =>
+        `<label><input type="checkbox" value="${m.id}"> ${esc(m.title)}</label>`).join('') || '<div class="empty">暂无材料</div>';
+    }
+
+    async function createApp() {
+      const name = document.getElementById('app-name').value.trim();
+      if (!name) { alert('应用名称不能为空'); return; }
+      const skill_ids = [...document.querySelectorAll('#app-skills input:checked')].map(i => +i.value);
+      const material_ids = [...document.querySelectorAll('#app-materials input:checked')].map(i => +i.value);
+      const resp = await authFetch('/api/apps', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          name,
+          description: document.getElementById('app-desc').value.trim(),
+          template_id: document.getElementById('app-template').value || null,
+          skill_ids, material_ids,
+        }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      document.getElementById('app-status').textContent = resp.ok ? '已创建' : (data.message || '创建失败');
+      if (resp.ok) { loadApps(); document.getElementById('app-name').value = ''; document.getElementById('app-desc').value = ''; }
+    }
+
+    async function deleteApp(id) {
+      if (!confirm('确定删除该应用？')) return;
+      await authFetch(`/api/apps/${id}`, {method: 'DELETE'});
+      loadApps();
+    }
+
+    loadApps();
+    {% if user['role'] == 'teacher' %}loadOptions();{% endif %}
+  </script>
+</body>
+</html>

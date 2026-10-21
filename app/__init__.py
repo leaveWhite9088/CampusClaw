@@ -25,22 +25,27 @@ def create_app():
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-    from . import assistant, auth, materials, search
+    from . import apps, assistant, auth, materials, mcp_api, search
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(materials.bp)
     app.register_blueprint(search.bp)
     app.register_blueprint(assistant.bp)
+    app.register_blueprint(apps.bp)
+    app.register_blueprint(mcp_api.bp)
 
     # 第 4 课：启动迁移（既有库补切片表）+ 为无切片材料按 auto 补齐索引
     from .db import (
-        ensure_assistant_schema, ensure_retrieval_schema, seed_assistant_defaults,
+        ensure_assistant_schema, ensure_platform_schema, ensure_retrieval_schema,
+        seed_assistant_defaults, seed_platform_defaults,
     )
     from .indexing import backfill_missing
 
     ensure_retrieval_schema(app.config["DATABASE"])
     ensure_assistant_schema(app.config["DATABASE"])
+    ensure_platform_schema(app.config["DATABASE"])
     seed_assistant_defaults(app.config["DATABASE"])
+    seed_platform_defaults(app.config["DATABASE"])
     with app.app_context():
         try:
             backfill_missing()

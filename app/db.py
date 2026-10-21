@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 from flask import current_app
@@ -50,13 +51,96 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id, id);
 """
 
-# skills 表（第 3 课占位）扩展列：简介、完整指令、启用开关
+# skills 表（第 3 课占位）扩展列：简介、完整指令、启用开关 + 第 6 课：适用条件/工具白名单/来源
 SKILL_COLUMNS = {
     "description": "TEXT NOT NULL DEFAULT ''",
     "instructions": "TEXT NOT NULL DEFAULT ''",
     "enabled": "INTEGER NOT NULL DEFAULT 0",
     "updated_at": "TEXT NOT NULL DEFAULT ''",
+    "applicable": "TEXT NOT NULL DEFAULT ''",
+    "tools": "TEXT NOT NULL DEFAULT 'knowledge_search'",
+    "source": "TEXT NOT NULL DEFAULT 'manual'",
 }
+
+PLATFORM_SCHEMA = """
+CREATE TABLE IF NOT EXISTS prompt_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL REFERENCES classes(id),
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    built_in INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE TABLE IF NOT EXISTS ai_apps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL REFERENCES classes(id),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    template_id INTEGER REFERENCES prompt_templates(id),
+    skill_ids TEXT NOT NULL DEFAULT '[]',
+    material_ids TEXT NOT NULL DEFAULT '[]',
+    built_in INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE TABLE IF NOT EXISTS llm_call_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL REFERENCES classes(id),
+    user_id INTEGER REFERENCES users(id),
+    conversation_id INTEGER REFERENCES conversations(id),
+    app_id INTEGER REFERENCES ai_apps(id),
+    source TEXT NOT NULL DEFAULT 'conversation',
+    model TEXT NOT NULL DEFAULT '',
+    request_json TEXT NOT NULL,
+    response_text TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'ok' CHECK (status IN ('ok', 'error')),
+    error TEXT NOT NULL DEFAULT '',
+    template_name TEXT NOT NULL DEFAULT '',
+    skill_names TEXT NOT NULL DEFAULT '[]',
+    tool_calls TEXT,
+    kb_total_chunks INTEGER NOT NULL DEFAULT 0,
+    kb_total_chars INTEGER NOT NULL DEFAULT 0,
+    kb_passed_chunks INTEGER NOT NULL DEFAULT 0,
+    kb_passed_chars INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_logs_class ON llm_call_logs(class_id, id);
+"""
+
+MCP_SCHEMA = """
+CREATE TABLE IF NOT EXISTS mcp_servers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL REFERENCES classes(id),
+    name TEXT NOT NULL,
+    base_url TEXT NOT NULL,
+    auth_token TEXT NOT NULL DEFAULT '',
+    connected INTEGER NOT NULL DEFAULT 0 CHECK (connected IN (0, 1)),
+    connected_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    UNIQUE(class_id, name)
+);
+CREATE TABLE IF NOT EXISTS mcp_tools (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_id INTEGER NOT NULL REFERENCES mcp_servers(id) ON DELETE CASCADE,
+    tool_name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    schema_json TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(server_id, tool_name)
+);
+CREATE TABLE IF NOT EXISTS mcp_tool_calls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL REFERENCES classes(id),
+    server_id INTEGER REFERENCES mcp_servers(id),
+    tool_ref TEXT NOT NULL,
+    user_id INTEGER REFERENCES users(id),
+    conversation_id INTEGER REFERENCES conversations(id),
+    status TEXT NOT NULL CHECK (status IN ('ok', 'denied', 'error')),
+    detail TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+"""
 
 
 def get_conn():
@@ -86,6 +170,20 @@ def ensure_assistant_schema(db_path):
             for col, decl in SKILL_COLUMNS.items():
                 if col not in existing:
                     conn.execute(f"ALTER TABLE skills ADD COLUMN {col} {decl}")
+    finally:
+        conn.close()
+
+
+def ensure_platform_schema(db_path):
+    """启动迁移：应用/模板/调用日志/MCP 表 + conversations.app_id 列（幂等）。"""
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            conn.executescript(PLATFORM_SCHEMA)
+            conn.executescript(MCP_SCHEMA)
+            existing = {r[1] for r in conn.execute("PRAGMA table_info(conversations)")}
+            if "app_id" not in existing:
+                conn.execute("ALTER TABLE conversations ADD COLUMN app_id INTEGER")
     finally:
         conn.close()
 
@@ -358,14 +456,16 @@ def get_skill(skill_id):
         conn.close()
 
 
-def create_skill(class_id, name, description, instructions):
+def create_skill(class_id, name, description, instructions,
+                 applicable="", tools="knowledge_search", source="manual"):
     conn = get_conn()
     try:
         with conn:
             cur = conn.execute(
                 "INSERT INTO skills (class_id, name, description, instructions, enabled, "
-                "updated_at) VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'))",
-                (class_id, name, description, instructions),
+                "updated_at, applicable, tools, source) "
+                "VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'), ?, ?, ?)",
+                (class_id, name, description, instructions, applicable, tools, source),
             )
             return cur.lastrowid
     finally:
@@ -373,7 +473,8 @@ def create_skill(class_id, name, description, instructions):
 
 
 def update_skill(skill_id, **fields):
-    allowed = {"name", "description", "instructions", "enabled"}
+    allowed = {"name", "description", "instructions", "enabled",
+               "applicable", "tools", "source"}
     sets = {k: v for k, v in fields.items() if k in allowed}
     if not sets:
         return
@@ -401,13 +502,13 @@ def enabled_skills(class_id):
         conn.close()
 
 
-def create_conversation(class_id, user_id, title):
+def create_conversation(class_id, user_id, title, app_id=None):
     conn = get_conn()
     try:
         with conn:
             cur = conn.execute(
-                "INSERT INTO conversations (class_id, user_id, title) VALUES (?, ?, ?)",
-                (class_id, user_id, title),
+                "INSERT INTO conversations (class_id, user_id, title, app_id) "
+                "VALUES (?, ?, ?, ?)", (class_id, user_id, title, app_id),
             )
             return cur.lastrowid
     finally:
@@ -499,10 +600,505 @@ def seed_assistant_defaults(db_path):
                 if row is None:
                     conn.execute(
                         "INSERT INTO skills (class_id, name, description, instructions, "
-                        "enabled, updated_at) VALUES (?, ?, ?, ?, 0, "
-                        "datetime('now', 'localtime'))",
+                        "enabled, updated_at, applicable, tools, source) "
+                        "VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'), "
+                        "'', 'knowledge_search', 'built_in')",
                         (cid, SEED_SKILL["name"], SEED_SKILL["description"],
                          SEED_SKILL["instructions"]),
                     )
+    finally:
+        conn.close()
+
+
+# ---- 第 6 课平台化：模板 / 应用 / 调用日志 / MCP ----
+
+SEED_TEMPLATES = [
+    {
+        "name": "默认教研模板",
+        "content": (
+            "你是本班的教研助手，回答须简短、准确、面向中小学教学场景。\n"
+            "{{skills}}\n{{knowledge}}"
+        ),
+    },
+    {
+        "name": "解题引导模板",
+        "content": (
+            "你是本班的解题引导老师，语气温和有耐心。\n"
+            "要求：一次只指出下一步该检查什么，不代替学生完成整道题。\n"
+            "{{skills}}\n{{knowledge}}"
+        ),
+    },
+    {
+        "name": "作文点评模板",
+        "content": (
+            "你是本班的语文作文点评助手。\n"
+            "要求：先肯定优点，再按「选材 / 结构 / 语言」三条各给一条具体修改建议。\n"
+            "{{skills}}\n{{knowledge}}"
+        ),
+    },
+]
+
+SEED_SKILLS_EXTRA = [
+    {
+        "name": "概念讲解",
+        "description": "面向中小学生的概念讲解：先定义，再举一个本班材料里的例子",
+        "instructions": (
+            "你是概念讲解助手。规则：1) 先用一句话给出概念定义；"
+            "2) 再从本班材料中举一个具体例子（用 [编号] 标注出处）；"
+            "3) 最后用一个生活化的类比帮助理解；4) 讲解不超过 200 字。"
+        ),
+        "applicable": "概念,定义,什么意思,是什么,解释",
+        "tools": "knowledge_search",
+    },
+    {
+        "name": "作文点评",
+        "description": "点评学生作文：先优点后建议，按选材/结构/语言三条展开",
+        "instructions": (
+            "你是作文点评助手。规则：1) 先肯定作文最突出的一条优点；"
+            "2) 再从选材、结构、语言三个角度各给一条具体可操作的修改建议；"
+            "3) 引用本班材料中的范文或写作方法时用 [编号] 标注出处；"
+            "4) 语气鼓励，不直接替学生改写全文。"
+        ),
+        "applicable": "作文,点评,写作,范文,修改",
+        "tools": "knowledge_search",
+    },
+]
+
+SEED_APPS = [
+    {
+        "name": "资料问答助手",
+        "description": "基于本班材料的问答：先检索再回答，回答带出处标注",
+        "template": "默认教研模板",
+        "skills": [],
+        "materials": [],
+    },
+    {
+        "name": "解题引导助手",
+        "description": "只引导思路不给答案的解题助手，引用本班材料出处",
+        "template": "解题引导模板",
+        "skills": ["解题引导"],
+        "materials": [],
+    },
+    {
+        "name": "作文点评助手",
+        "description": "按选材/结构/语言三条点评作文，可引用范文",
+        "template": "作文点评模板",
+        "skills": ["作文点评"],
+        "materials": [],
+    },
+]
+
+
+def seed_platform_defaults(db_path):
+    """既有库补齐内置模板、技能与应用（幂等，按名称判重）。"""
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            for (cid,) in conn.execute("SELECT id FROM classes").fetchall():
+                for tpl in SEED_TEMPLATES:
+                    row = conn.execute(
+                        "SELECT 1 FROM prompt_templates WHERE class_id = ? AND name = ?",
+                        (cid, tpl["name"]),
+                    ).fetchone()
+                    if row is None:
+                        conn.execute(
+                            "INSERT INTO prompt_templates (class_id, name, content, built_in) "
+                            "VALUES (?, ?, ?, 1)", (cid, tpl["name"], tpl["content"]),
+                        )
+                for skill in SEED_SKILLS_EXTRA:
+                    row = conn.execute(
+                        "SELECT 1 FROM skills WHERE class_id = ? AND name = ? "
+                        "AND instructions != ''", (cid, skill["name"]),
+                    ).fetchone()
+                    if row is None:
+                        conn.execute(
+                            "INSERT INTO skills (class_id, name, description, instructions, "
+                            "enabled, updated_at, applicable, tools, source) "
+                            "VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'), ?, ?, 'built_in')",
+                            (cid, skill["name"], skill["description"],
+                             skill["instructions"], skill["applicable"], skill["tools"]),
+                        )
+                for app in SEED_APPS:
+                    row = conn.execute(
+                        "SELECT 1 FROM ai_apps WHERE class_id = ? AND name = ?",
+                        (cid, app["name"]),
+                    ).fetchone()
+                    if row is not None:
+                        continue
+                    tpl_id = conn.execute(
+                        "SELECT id FROM prompt_templates WHERE class_id = ? AND name = ?",
+                        (cid, app["template"]),
+                    ).fetchone()
+                    skill_ids = [
+                        r[0] for name in app["skills"] for r in conn.execute(
+                            "SELECT id FROM skills WHERE class_id = ? AND name = ?",
+                            (cid, name),
+                        ).fetchall()
+                    ]
+                    conn.execute(
+                        "INSERT INTO ai_apps (class_id, name, description, template_id, "
+                        "skill_ids, material_ids, built_in, enabled) "
+                        "VALUES (?, ?, ?, ?, ?, '[]', 1, 1)",
+                        (cid, app["name"], app["description"],
+                         tpl_id[0] if tpl_id else None,
+                         json.dumps(skill_ids)),
+                    )
+    finally:
+        conn.close()
+
+
+# ---- 提示词模板 ----
+
+
+def list_templates(class_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM prompt_templates WHERE class_id = ? ORDER BY id", (class_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_template(template_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM prompt_templates WHERE id = ?", (template_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def create_template(class_id, name, content, built_in=0):
+    conn = get_conn()
+    try:
+        with conn:
+            cur = conn.execute(
+                "INSERT INTO prompt_templates (class_id, name, content, built_in) "
+                "VALUES (?, ?, ?, ?)", (class_id, name, content, built_in),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def update_template(template_id, **fields):
+    allowed = {"name", "content"}
+    sets = {k: v for k, v in fields.items() if k in allowed}
+    if not sets:
+        return
+    clause = ", ".join(f"{k} = ?" for k in sets)
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                f"UPDATE prompt_templates SET {clause}, "
+                f"updated_at = datetime('now', 'localtime') WHERE id = ?",
+                (*sets.values(), template_id),
+            )
+    finally:
+        conn.close()
+
+
+def delete_template(template_id):
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                "UPDATE ai_apps SET template_id = NULL WHERE template_id = ?",
+                (template_id,),
+            )
+            conn.execute("DELETE FROM prompt_templates WHERE id = ?", (template_id,))
+    finally:
+        conn.close()
+
+
+# ---- AI 应用 ----
+
+
+def list_apps(class_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM ai_apps WHERE class_id = ? ORDER BY id", (class_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_app(app_id):
+    conn = get_conn()
+    try:
+        return conn.execute("SELECT * FROM ai_apps WHERE id = ?", (app_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def create_app_row(class_id, name, description, template_id, skill_ids, material_ids,
+                   built_in=0, enabled=1):
+    conn = get_conn()
+    try:
+        with conn:
+            cur = conn.execute(
+                "INSERT INTO ai_apps (class_id, name, description, template_id, "
+                "skill_ids, material_ids, built_in, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (class_id, name, description, template_id,
+                 json.dumps(skill_ids), json.dumps(material_ids), built_in, enabled),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def update_app_row(app_id, **fields):
+    allowed = {"name", "description", "template_id", "enabled"}
+    sets = {k: v for k, v in fields.items() if k in allowed}
+    if "skill_ids" in fields:
+        sets["skill_ids"] = json.dumps(fields["skill_ids"])
+    if "material_ids" in fields:
+        sets["material_ids"] = json.dumps(fields["material_ids"])
+    if not sets:
+        return
+    clause = ", ".join(f"{k} = ?" for k in sets)
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                f"UPDATE ai_apps SET {clause}, "
+                f"updated_at = datetime('now', 'localtime') WHERE id = ?",
+                (*sets.values(), app_id),
+            )
+    finally:
+        conn.close()
+
+
+def delete_app_row(app_id):
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute("UPDATE conversations SET app_id = NULL WHERE app_id = ?", (app_id,))
+            conn.execute("DELETE FROM ai_apps WHERE id = ?", (app_id,))
+    finally:
+        conn.close()
+
+
+# ---- LLM 调用日志 ----
+
+
+def insert_llm_log(**fields):
+    conn = get_conn()
+    try:
+        with conn:
+            cols = ", ".join(fields.keys())
+            marks = ", ".join("?" for _ in fields)
+            cur = conn.execute(
+                f"INSERT INTO llm_call_logs ({cols}) VALUES ({marks})",
+                tuple(fields.values()),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def list_llm_logs(class_id, limit=50):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT id, source, model, status, template_name, app_id, conversation_id, "
+            "       kb_total_chunks, kb_total_chars, kb_passed_chunks, kb_passed_chars, "
+            "       created_at "
+            "FROM llm_call_logs WHERE class_id = ? ORDER BY id DESC LIMIT ?",
+            (class_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_llm_log(log_id, class_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM llm_call_logs WHERE id = ? AND class_id = ?",
+            (log_id, class_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+# ---- 知识库统计（验证 2：全库 vs 实际传入） ----
+
+
+def kb_stats(class_id, material_ids=None):
+    """本班（或指定材料子集）ready 切片总量与字符总量。"""
+    conn = get_conn()
+    try:
+        if material_ids:
+            marks = ",".join("?" for _ in material_ids)
+            row = conn.execute(
+                f"SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(chunk_text)), 0) AS chars "
+                f"FROM knowledge_chunks WHERE class_id = ? AND index_status = 'ready' "
+                f"AND material_id IN ({marks})", (class_id, *material_ids),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(chunk_text)), 0) AS chars "
+                "FROM knowledge_chunks WHERE class_id = ? AND index_status = 'ready'",
+                (class_id,),
+            ).fetchone()
+        return {"total_chunks": row["n"], "total_chars": row["chars"]}
+    finally:
+        conn.close()
+
+
+# ---- MCP：服务器 / 工具缓存 / 审计 ----
+
+
+def list_mcp_servers(class_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM mcp_servers WHERE class_id = ? ORDER BY id", (class_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_mcp_server(server_id, class_id=None):
+    conn = get_conn()
+    try:
+        if class_id is None:
+            return conn.execute(
+                "SELECT * FROM mcp_servers WHERE id = ?", (server_id,)
+            ).fetchone()
+        return conn.execute(
+            "SELECT * FROM mcp_servers WHERE id = ? AND class_id = ?",
+            (server_id, class_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def get_mcp_server_by_name(class_id, name):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT * FROM mcp_servers WHERE class_id = ? AND name = ?", (class_id, name)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def create_mcp_server(class_id, name, base_url, auth_token):
+    conn = get_conn()
+    try:
+        with conn:
+            cur = conn.execute(
+                "INSERT INTO mcp_servers (class_id, name, base_url, auth_token) "
+                "VALUES (?, ?, ?, ?)", (class_id, name, base_url, auth_token),
+            )
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def update_mcp_server(server_id, **fields):
+    allowed = {"name", "base_url", "auth_token"}
+    sets = {k: v for k, v in fields.items() if k in allowed and v is not None}
+    if not sets:
+        return
+    clause = ", ".join(f"{k} = ?" for k in sets)
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                f"UPDATE mcp_servers SET {clause} WHERE id = ?", (*sets.values(), server_id)
+            )
+    finally:
+        conn.close()
+
+
+def delete_mcp_server(server_id):
+    """删除服务器：缓存级联删除；审计行保留证据，server_id 置空、tool_ref 保留。"""
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                "UPDATE mcp_tool_calls SET server_id = NULL WHERE server_id = ?",
+                (server_id,),
+            )
+            conn.execute("DELETE FROM mcp_tools WHERE server_id = ?", (server_id,))
+            conn.execute("DELETE FROM mcp_servers WHERE id = ?", (server_id,))
+    finally:
+        conn.close()
+
+
+def set_mcp_connected(server_id, connected):
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                "UPDATE mcp_servers SET connected = ?, connected_at = CASE WHEN ? = 1 "
+                "THEN datetime('now', 'localtime') ELSE NULL END WHERE id = ?",
+                (connected, connected, server_id),
+            )
+    finally:
+        conn.close()
+
+
+def replace_mcp_tools(server_id, tools):
+    """覆盖写工具缓存：事务内先删旧再插新。tools: [{name, description, inputSchema}]。"""
+    import json as _json
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute("DELETE FROM mcp_tools WHERE server_id = ?", (server_id,))
+            for t in tools:
+                conn.execute(
+                    "INSERT INTO mcp_tools (server_id, tool_name, description, schema_json) "
+                    "VALUES (?, ?, ?, ?)",
+                    (server_id, t["name"], t.get("description", ""),
+                     _json.dumps(t.get("inputSchema", {}), ensure_ascii=False)),
+                )
+    finally:
+        conn.close()
+
+
+def list_mcp_tools(server_id):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT id, tool_name, description, schema_json FROM mcp_tools "
+            "WHERE server_id = ? ORDER BY id", (server_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def list_mcp_tool_calls(class_id, limit=50):
+    conn = get_conn()
+    try:
+        return conn.execute(
+            "SELECT c.id, c.tool_ref, c.status, c.detail, c.created_at, "
+            "       s.name AS server_name, u.username, c.conversation_id "
+            "FROM mcp_tool_calls c "
+            "LEFT JOIN mcp_servers s ON s.id = c.server_id "
+            "LEFT JOIN users u ON u.id = c.user_id "
+            "WHERE c.class_id = ? ORDER BY c.id DESC LIMIT ?", (class_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def insert_mcp_tool_call(class_id, server_id, tool_ref, user_id, conversation_id,
+                         status, detail):
+    conn = get_conn()
+    try:
+        with conn:
+            conn.execute(
+                "INSERT INTO mcp_tool_calls (class_id, server_id, tool_ref, user_id, "
+                "conversation_id, status, detail) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (class_id, server_id, tool_ref, user_id, conversation_id, status, detail),
+            )
     finally:
         conn.close()
