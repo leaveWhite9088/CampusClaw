@@ -25,21 +25,29 @@ MATH_MATERIAL = """# 数学自习笔记
 合并同类项时，把系数相加，字母和字母的指数不变。
 例：化简 (3a + 2b) - (a - b) = 3a + 2b - a + b = 2a + 3b。
 常见错误：只给第一项乘系数、漏掉变号。检查方法是数一数括号内有几项，展开后就应该有几项。
+比如 2(x + 3) - (x - 1)，先去括号：2x + 6 - x + 1，再合并同类项得 x + 7。
+练习时建议分两步走：第一步只去括号，不动其他；第二步再合并同类项，这样不容易出错。
+如果括号前有数字系数，切记系数要乘以括号内的每一项，例如 3(2a - b) = 6a - 3b，不能写成 6a - b。
 
 ## 常用单位换算
 
 长度单位从大到小：千米（km）、米（m）、分米（dm）、厘米（cm）、毫米（mm），相邻单位之间进率是 10。
-1 千米 = 1000 米，1 米 = 100 厘米，1 米 = 1000 毫米。
-质量单位：1 吨 = 1000 千克，1 千克 = 1000 克。
-时间单位：1 时 = 60 分，1 分 = 60 秒。
+1 千米 = 1000 米，1 米 = 100 厘米，1 米 = 1000 毫米，1 分米 = 10 厘米。
+质量单位：1 吨 = 1000 千克，1 千克 = 1000 克；计量较轻的物品常用克作单位，比如一枚硬币约重 6 克。
+时间单位：1 时 = 60 分，1 分 = 60 秒；1 天 = 24 时。
 换算方法：大单位化小单位乘进率，小单位化大单位除以进率。
+例如：5 米 = 5 × 100 = 500 厘米；3000 克 = 3000 ÷ 1000 = 3 千克；2 时 30 分 = 150 分。
+做题时先写清楚单位再动笔，最后答案别忘了带上单位，这是阅卷时最容易丢分的地方。
 
 ## 分数与方程
 
 把单位 1 平均分成若干份，表示这样一份或几份的数叫分数。
 异分母分数相加减，要先通分：取几个分母的最小公倍数作公分母，再按同分母分数加减。
+例如：1/2 + 1/3，先通分成 3/6 + 2/6 = 5/6；计算结果能约分的要化成最简分数。
 含有未知数的等式叫方程。解方程时利用等式的性质：两边同时加减同一个数，或同时乘除同一个非零数，等式仍然成立。
-解完方程要检验：把结果代回原方程，看左右两边是否相等。
+例如解方程 x + 5 = 12，两边同时减 5，得 x = 7；检验：7 + 5 = 12，左右两边相等，解正确。
+列方程解应用题的关键是找到等量关系：先设未知数，再根据题目里的相等关系列出方程，最后解方程并作答。
+解完方程要检验：把结果代回原方程，看左右两边是否相等，这一步不要省略。
 """
 
 
@@ -88,7 +96,29 @@ def main():
             print(f"[seed] 材料已入库并索引：{len(chunk_ids)} 个切片（embedded={embedded}）")
         else:
             material_id = row["id"]
-            print(f"[seed] 材料已存在（id={material_id}），跳过")
+            # 已存在但正文是早期短版：更新正文并按 auto 重建索引
+            conn = get_conn()
+            try:
+                cur_len = conn.execute(
+                    "SELECT LENGTH(body_text) FROM knowledge_entries "
+                    "WHERE material_id = ?", (material_id,)).fetchone()[0]
+            finally:
+                conn.close()
+            if cur_len is not None and cur_len < len(MATH_MATERIAL) - 100:
+                conn = get_conn()
+                try:
+                    with conn:
+                        conn.execute(
+                            "UPDATE knowledge_entries SET body_text = ? "
+                            "WHERE material_id = ?", (MATH_MATERIAL, material_id))
+                finally:
+                    conn.close()
+                from app.indexing import index_entry
+                entry = get_entry_for_material(material_id)
+                chunk_ids, _, embedded = index_entry(entry["id"], strategy="auto")
+                print(f"[seed] 材料正文已扩充并重建索引：{len(chunk_ids)} 个切片")
+            else:
+                print(f"[seed] 材料已存在（id={material_id}），跳过")
 
         # 2. MCP 服务器登记 + 连接发现（幂等；失败告警不中断）
         server = get_mcp_server_by_name(class_a, "campus-tools")
