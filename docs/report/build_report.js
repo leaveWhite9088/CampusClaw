@@ -71,28 +71,6 @@ function calcTitleLayout(title, maxWidthTwips, preferredPt = 40, minPt = 24) {
   return { titlePt, titleLines: lines };
 }
 
-function calcCoverSpacing(params) {
-  const { titleLineCount = 1, titlePt = 36, hasSubtitle = false, hasEnglishLabel = false,
-          metaLineCount = 0, fixedHeight = 800, pageHeight = 16838,
-          marginTop = 0, marginBottom = 0 } = params;
-  const SAFETY = 1200;
-  const usableHeight = pageHeight - marginTop - marginBottom - SAFETY;
-  const titleHeight = titleLineCount * (titlePt * 23 + 200);
-  const subtitleHeight = hasSubtitle ? (12 * 23 + 600) : 0;
-  const englishLabelHeight = hasEnglishLabel ? (9 * 23 + 600) : 0;
-  const metaHeight = metaLineCount * (10 * 23 + 100);
-  const implicitParaHeight = 3 * 300;
-  const contentHeight = titleHeight + subtitleHeight + englishLabelHeight + metaHeight + fixedHeight + implicitParaHeight;
-  const safeRemaining = Math.max(usableHeight - contentHeight, 400);
-  const FOOTER_MIN = 800;
-  const rawTop = Math.floor(safeRemaining * 0.45);
-  const rawBottom = Math.floor(safeRemaining * 0.45);
-  const bottomSpacing = Math.max(rawBottom, FOOTER_MIN);
-  const topSpacing = Math.max(rawTop - Math.max(0, FOOTER_MIN - rawBottom), 400);
-  const midSpacing = Math.max(safeRemaining - topSpacing - bottomSpacing, 0);
-  return { topSpacing, midSpacing, bottomSpacing };
-}
-
 const allNoBorders = {
   top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE },
   left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
@@ -103,62 +81,92 @@ const noBorders = {
   left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
 };
 
-function buildCoverR1(config) {
-  const C = config.palette;
-  const padL = 1200, padR = 800;
-  const availableWidth = 11906 - padL - padR - 300;
-  const { titlePt, titleLines } = calcTitleLayout(config.title, availableWidth, 40, 24);
-  const titleSize = titlePt * 2;
-  const spacing = calcCoverSpacing({
-    titleLineCount: titleLines.length, titlePt,
-    hasSubtitle: !!config.subtitle, hasEnglishLabel: !!config.englishLabel,
-    metaLineCount: (config.metaLines || []).length, fixedHeight: 400,
+// ── 实验报告封面（白底）：校徽 + 校名 + 课程实验报告 + 标题 + 信息表 ──
+const NB = { style: BorderStyle.NONE };
+
+function labInfoTable(rows) {
+  return new Table({
+    width: { size: 68, type: WidthType.PERCENTAGE },
+    alignment: AlignmentType.CENTER,
+    borders: allNoBorders,
+    rows: rows.map(function (pair) {
+      return new TableRow({
+        cantSplit: true,
+        children: [
+          new TableCell({
+            width: { size: 32, type: WidthType.PERCENTAGE },
+            borders: { top: NB, bottom: NB, left: NB, right: NB },
+            margins: { top: 100, bottom: 100, left: 120, right: 120 },
+            children: [new Paragraph({
+              alignment: AlignmentType.LEFT,
+              spacing: { line: Math.ceil(15 * 23), lineRule: "atLeast" },
+              children: [new TextRun({ text: pair[0] + "：", size: 30, bold: true, color: "000000",
+                font: { eastAsia: "SimHei", ascii: "Times New Roman" } })],
+            })],
+          }),
+          new TableCell({
+            width: { size: 68, type: WidthType.PERCENTAGE },
+            borders: { top: NB, left: NB, right: NB,
+              bottom: { style: BorderStyle.SINGLE, size: 4, color: "000000" } },
+            margins: { top: 100, bottom: 100, left: 120, right: 120 },
+            children: [new Paragraph({
+              alignment: AlignmentType.LEFT,
+              spacing: { line: Math.ceil(15 * 23), lineRule: "atLeast" },
+              children: [new TextRun({ text: pair[1], size: 30, color: "000000",
+                font: { eastAsia: "SimSun", ascii: "Times New Roman" } })],
+            })],
+          }),
+        ],
+      });
+    }),
   });
-  const accentLeft = { style: BorderStyle.SINGLE, size: 8, color: C.accent, space: 12 };
+}
+
+function buildLabCover(config) {
+  const seal = fs.readFileSync(ASSETS + "/pku-seal.png");
+  const sealSize = 200; // 200px ≈ 5.3cm 大校徽
   const children = [];
-  children.push(new Paragraph({ spacing: { before: spacing.topSpacing } }));
-  if (config.englishLabel) {
-    children.push(new Paragraph({
-      indent: { left: padL, right: padR }, spacing: { after: 500 },
-      border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.accent, space: 8 } },
-      children: [new TextRun({ text: config.englishLabel.split("").join("  "),
-        size: 18, color: C.accent, font: { ascii: "Calibri", eastAsia: "SimHei" }, characterSpacing: 40 })],
-    }));
-  }
+
+  // 顶部留白 + 校徽 + 校名
+  children.push(new Paragraph({ spacing: { before: 1300 } }));
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 300 },
+    children: [new ImageRun({ data: seal, transformation: { width: sealSize, height: sealSize }, type: "png" })],
+  }));
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 260, line: Math.ceil(42 * 23), lineRule: "atLeast" },
+    children: [new TextRun({ text: "北京大学", size: 84, bold: true, color: "000000",
+      characterSpacing: 200,
+      font: { eastAsia: "SimHei", ascii: "Times New Roman" } })],
+  }));
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 500, line: Math.ceil(18 * 23), lineRule: "atLeast" },
+    children: [new TextRun({ text: config.docType, size: 36, color: "000000",
+      font: { eastAsia: "SimSun", ascii: "Times New Roman" } })],
+  }));
+
+  // 主标题（动态字号）
+  const availableWidth = 11906 - 1701 - 1417;
+  const layout = calcTitleLayout(config.title, availableWidth, 28, 24);
+  const titlePt = layout.titlePt, titleLines = layout.titleLines;
   for (let i = 0; i < titleLines.length; i++) {
     children.push(new Paragraph({
-      indent: { left: padL },
-      spacing: { after: i < titleLines.length - 1 ? 100 : 300, line: Math.ceil(titlePt * 23), lineRule: "atLeast" },
-      children: [new TextRun({ text: titleLines[i], size: titleSize, bold: true,
-        color: C.cover.titleColor, font: { eastAsia: "SimHei", ascii: "Arial" } })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: i < titleLines.length - 1 ? 100 : 0,
+        line: Math.ceil(titlePt * 23), lineRule: "atLeast" },
+      children: [new TextRun({ text: titleLines[i], size: titlePt * 2, bold: true, color: "000000",
+        font: { eastAsia: "SimHei", ascii: "Times New Roman" } })],
     }));
   }
-  if (config.subtitle) {
-    children.push(new Paragraph({
-      indent: { left: padL }, spacing: { after: 800 },
-      children: [new TextRun({ text: config.subtitle, size: 24, color: C.cover.subtitleColor,
-        font: { eastAsia: "Microsoft YaHei", ascii: "Arial" } })],
-    }));
-  }
-  for (const line of (config.metaLines || [])) {
-    children.push(new Paragraph({
-      indent: { left: padL + 200 }, spacing: { after: 80 },
-      border: { left: accentLeft },
-      children: [new TextRun({ text: line, size: 24, color: C.cover.metaColor,
-        font: { eastAsia: "Microsoft YaHei", ascii: "Arial" } })],
-    }));
-  }
-  children.push(new Paragraph({ spacing: { before: spacing.bottomSpacing } }));
-  children.push(new Paragraph({
-    indent: { left: padL, right: padR },
-    border: { top: { style: BorderStyle.SINGLE, size: 2, color: C.accent, space: 8 } },
-    spacing: { before: 200 },
-    children: [
-      new TextRun({ text: config.footerLeft || "", size: 16, color: C.cover.footerColor, font: { ascii: "Arial" } }),
-      new TextRun({ text: "                                        " }),
-      new TextRun({ text: config.footerRight || "", size: 16, color: C.cover.footerColor, font: { ascii: "Arial" } }),
-    ],
-  }));
+
+  // 信息表（下划线式）
+  children.push(new Paragraph({ spacing: { before: 2100 } }));
+  children.push(labInfoTable(config.infoRows));
+
+  // 单页 16838 精确高度的白色包裹表
   return [new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     layout: TableLayoutType.FIXED,
@@ -166,8 +174,9 @@ function buildCoverR1(config) {
     rows: [new TableRow({
       height: { value: 16838, rule: "exact" },
       children: [new TableCell({
-        shading: { type: ShadingType.CLEAR, fill: C.bg }, borders: noBorders,
-        children,
+        shading: { type: ShadingType.CLEAR, fill: "FFFFFF" },
+        borders: noBorders,
+        children: children,
       })],
     })],
   })];
@@ -532,7 +541,7 @@ bodyChildren.push(...codeBlock([
   '单位换算工具：请提供数值与两个单位（如「把 5 米换成厘米」）。支持长度（km/m/dm/cm/mm）、',
   '质量（t/kg/g）、时间（h/min/s）。',
 ]));
-bodyChildren.push(body("工具调用的另一侧报文同样留了证据。在 app 容器内直连 mcp-server 抓取的原始 JSON-RPC 交互如下（完整文件见仓库 report/evidence/mcp-jsonrpc.txt）：主机侧每次 tools/call 的 params 只含工具名与 arguments.query（提问原文），响应的 result.content 为文本数组。"));
+bodyChildren.push(body("工具调用的另一侧报文同样留了证据。在 app 容器内直连 mcp-server 抓取的原始 JSON-RPC 交互如下（完整文件见仓库 docs/report/evidence/mcp-jsonrpc.txt）：主机侧每次 tools/call 的 params 只含工具名与 arguments.query（提问原文），响应的 result.content 为文本数组。"));
 bodyChildren.push(...codeBlock([
   '请求: {"jsonrpc":"2.0","id":1,"method":"tools/call",',
   '       "params":{"name":"formula_hint","arguments":{"query":"去括号这一步我不会"}}}',
@@ -603,19 +612,16 @@ const doc = new Document({
       properties: {
         page: { size: { width: 11906, height: 16838 }, margin: { top: 0, bottom: 0, left: 0, right: 0 } },
       },
-      children: buildCoverR1({
+      children: buildLabCover({
+        docType: "《互联网软件开发技术与实践》课程实验报告",
         title: "CampusClaw 个人项目应用平台验收报告",
-        subtitle: "内置 AI 应用 · 提示词模板 · 知识库检索 · 技能 · MCP 工具接入",
-        englishLabel: "ACCEPTANCE REPORT",
-        metaLines: [
-          "课 程：互联网软件开发技术与实践（2026 年秋）",
-          "项 目：CampusClaw —— 面向中小学的教研智能体平台",
-          "仓 库：github.com/leaveWhite9088/CampusClaw",
-          "日 期：2026 年 10 月 22 日",
+        infoRows: [
+          ["课程名称", "互联网软件开发技术与实践"],
+          ["项目名称", "CampusClaw 教研智能体平台"],
+          ["姓名", "唐梓鑫"],
+          ["学号", "2601210752"],
+          ["日期", "2026 年 10 月 22 日"],
         ],
-        footerLeft: "CampusClaw",
-        footerRight: "SDD · OpenSpec · Docker Compose",
-        palette: P,
       }),
     },
     { // 前置：目录（罗马页码）
