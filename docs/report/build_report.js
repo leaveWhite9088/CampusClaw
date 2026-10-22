@@ -4,7 +4,7 @@ const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   ImageRun, PageBreak, Header, Footer, PageNumber, NumberFormat,
   AlignmentType, HeadingLevel, WidthType, BorderStyle, ShadingType,
-  TableOfContents, SectionType, TableLayoutType,
+  TableOfContents, SectionType, TableLayoutType, ExternalHyperlink,
 } = require("docx");
 const fs = require("fs");
 const sizeOf = require("image-size");
@@ -336,8 +336,15 @@ const bodyChildren = [];
 // —— 1 项目概述 ——
 bodyChildren.push(h1("1  项目概述"));
 bodyChildren.push(h2("1.1  项目简介"));
-bodyChildren.push(body("CampusClaw 是北京大学《互联网软件开发技术与实践》课程的个人项目，定位为面向中小学的教研智能体平台。教师登录后按班级上传与管理教学材料，本班成员可以围绕材料进行检索与问答；平台在知识库检索之上提供应用层能力：内置多个 AI 应用、提示词模板、内置与可上传的技能（Skill）、以及通过 MCP（Model Context Protocol）接入的外部工具。班级是数据边界，所有业务查询都在服务端按登录会话中的班级过滤，前端隐藏入口不构成隔离手段。"));
-bodyChildren.push(body("本项目采用规约驱动开发（SDD）：任何功能先在 openspec/changes/ 下编写 change 规约四件套（proposal、design、specs、tasks），再按规约实现并逐条验收。本次验收涉及两个 change：add-ai-app-platform（AI 应用、提示词模板、技能上传、LLM 调用日志）与 add-mcp-tools（自建 MCP 服务与主机侧接入、调用审计）。"));
+bodyChildren.push(bodyRuns([
+  rn("CampusClaw 是北京大学《互联网软件开发技术与实践》课程的个人项目（仓库地址："),
+  new ExternalHyperlink({
+    children: [new TextRun({ text: "https://github.com/leaveWhite9088/CampusClaw", style: "Hyperlink", size: 24,
+      font: { ascii: "Times New Roman", eastAsia: "SimSun" } })],
+    link: "https://github.com/leaveWhite9088/CampusClaw",
+  }),
+  rn("），一个面向中小学教研场景的 AI 应用平台。教师登录后按班级上传教学材料，系统自动切分入库，本班学生用自然语言就能检索材料并定位出处；在知识库之上，平台提供应用层能力：内置多个各司其职的 AI 应用（资料问答、解题引导、作文点评等），每个应用可绑定不同的提示词模板与技能——模板规定助手的角色与回答规范，技能把「只引导不给答案」这类教学规则注入回答，也支持按课程技能文件格式直接上传；对话时系统先检索本班知识库，只把最相关的若干切片连同提问一起交给大模型，并给回答标注材料出处；平台还通过 MCP 协议接入自建的外部工具服务（公式提示、单位换算、概念速查），提问命中相应技能时服务端自动调用工具并把结果融入回答，每一次大模型调用与工具调用都有完整的日志与审计可回溯。整个系统按「班级即数据边界」设计，不同班级数据相互隔离；开发全程采用规约驱动（SDD），以 Docker Compose 一键部署。"),
+]));
 bodyChildren.push(h2("1.2  仓库地址与运行方式"));
 bodyChildren.push(bodyRuns([
   rn("项目 Git 仓库地址：", { bold: true }),
